@@ -25,7 +25,13 @@ export function useCreateTransaction() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Failed to create transaction");
+        const message =
+          typeof err.error === "string"
+            ? err.error
+            : typeof err.message === "string"
+              ? err.message
+              : "Failed to create transaction";
+        throw new Error(message);
       }
       return res.json();
     },

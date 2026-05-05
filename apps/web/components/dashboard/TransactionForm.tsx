@@ -79,7 +79,7 @@ export function TransactionForm({
         if (i.id !== id) return i;
         const next = { ...i, ...updates };
         if (updates.drug) {
-          next.pricePerDispense = updates.drug.sellPricePerDispense;
+          next.pricePerDispense = Number(updates.drug.sellPricePerDispense);
         }
         return next;
       })
@@ -263,6 +263,7 @@ export function TransactionForm({
       <QuickAddPatientModal
         open={showAddPatient}
         onOpenChange={setShowAddPatient}
+        onPatientAdded={(patient) => setSelectedPatient(patient)}
       />
     </form>
   );

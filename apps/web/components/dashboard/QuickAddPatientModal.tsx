@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -13,16 +14,20 @@ import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
 import { toast } from "sonner";
+import type { Patient } from "@repo/types";
 
 interface QuickAddPatientModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPatientAdded?: (patient: Patient) => void;
 }
 
 export function QuickAddPatientModal({
   open,
   onOpenChange,
+  onPatientAdded,
 }: QuickAddPatientModalProps) {
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,12 +45,28 @@ export function QuickAddPatientModal({
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Gagal menambahkan pasien");
+        const message =
+          typeof err.error === "string"
+            ? err.error
+            : typeof err.message === "string"
+              ? err.message
+              : "Gagal menambahkan pasien";
+        throw new Error(message);
       }
+
+      const data = await res.json();
+      const newPatient: Patient | undefined = data?.patient;
 
       toast.success("Pasien berhasil ditambahkan");
       setName("");
       setWhatsappNumber("");
+
+      await queryClient.invalidateQueries({ queryKey: ["patients"] });
+
+      if (newPatient) {
+        onPatientAdded?.(newPatient);
+      }
+
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err.message);
