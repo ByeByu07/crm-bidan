@@ -1,19 +1,27 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Montserrat, Playfair_Display, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 import "@repo/ui/globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@repo/ui/components/sonner";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+const fontSans = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+
+const fontSerif = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-serif",
 });
+
+const fontMono = Source_Code_Pro({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
 
 export const metadata: Metadata = {
   title: "BidanCRM",
@@ -27,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
             {children}
