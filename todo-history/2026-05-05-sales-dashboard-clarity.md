@@ -13,8 +13,10 @@
 
 ## Todo Checklist
 
-- [ ] Ganti label "Rata-rata" → "Rata-rata per Transaksi"
-- [ ] Ganti tab labels: "1B" → "1 Bulan", "3B" → "3 Bulan", "6B" → "6 Bulan"
+- [x] Ganti label "Rata-rata" → "Rata-rata per Transaksi"
+- [x] Ganti tab labels: "1B" → "1 Bulan", "3B" → "3 Bulan", "6B" → "6 Bulan"
 - [ ] Tambahkan tooltip/footnote menjelaskan perhitungan perubahan %
 - [ ] Buat card "Transaksi" dan "Pendapatan" clickable → detail list
 - [ ] Tambahkan legend atau info icon di setiap metric card
+
+## Status: PARTIAL ✅

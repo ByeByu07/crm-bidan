@@ -17,6 +17,7 @@ import { PatientCombobox } from "./PatientCombobox";
 import { DrugCombobox } from "./DrugCombobox";
 import { QuickAddPatientModal } from "./QuickAddPatientModal";
 import { QuickAddConditionModal } from "./QuickAddConditionModal";
+import { CurrencyInput } from "./CurrencyInput";
 import type { Drug, Patient, Condition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
@@ -145,6 +146,42 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-2">
+        <Label>Kondisi Pasien</Label>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Select
+              value={condition}
+              onValueChange={(v) => setCondition(v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kondisi..." />
+              </SelectTrigger>
+              <SelectContent>
+                {conditions.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowAddCondition(true)}
+          >
+            <Plus className="size-4" />
+          </Button>
+        </div>
+        {conditions.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            Belum ada kondisi. Klik + untuk menambahkan.
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
         <Label>Tanggal Pembelian</Label>
         <Popover>
           <PopoverTrigger asChild>
@@ -164,9 +201,17 @@ export function TransactionForm({
             <Calendar
               mode="single"
               selected={purchaseDate ? new Date(purchaseDate) : undefined}
-              onSelect={(date) =>
-                setPurchaseDate(date ? date.toISOString().split("T")[0]! : "")
-              }
+              onSelect={(date) => {
+                if (!date) {
+                  setPurchaseDate("");
+                  return;
+                }
+                // Use local date parts to avoid timezone offset issues
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                setPurchaseDate(`${year}-${month}-${day}`);
+              }}
               initialFocus
             />
           </PopoverContent>
@@ -174,13 +219,7 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Item Obat</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addItem}>
-            <Plus className="mr-1 size-3" />
-            Tambah
-          </Button>
-        </div>
+        <Label>Item Obat</Label>
         {items.map((item, idx) => (
           <Card key={item.id}>
             <CardContent className="space-y-3 p-3">
@@ -190,10 +229,10 @@ export function TransactionForm({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-xs"
+                    size="icon"
                     onClick={() => removeItem(item.id)}
                   >
-                    <Trash2 className="size-3 text-destructive" />
+                    <Trash2 className="size-4 text-destructive" />
                   </Button>
                 )}
               </div>
@@ -218,15 +257,15 @@ export function TransactionForm({
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Harga Satuan</Label>
-                  <Input
-                    type="number"
-                    min={0}
+                  <CurrencyInput
                     value={item.pricePerDispense}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       updateItem(item.id, {
-                        pricePerDispense: parseFloat(e.target.value) || 0,
+                        pricePerDispense: v,
                       })
                     }
+                    placeholder="0"
+                    className="h-8"
                   />
                 </div>
               </div>
@@ -246,32 +285,15 @@ export function TransactionForm({
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Kondisi Pasien</Label>
-        <Select
-          value={condition}
-          onValueChange={(v) => setCondition(v)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Pilih kondisi..." />
-          </SelectTrigger>
-          <SelectContent>
-            {conditions.map((c) => (
-              <SelectItem key={c.id} value={c.name}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <button
+        <Button
           type="button"
-          onClick={() => setShowAddCondition(true)}
-          className="text-sm text-muted-foreground hover:text-primary hover:underline"
+          variant="outline"
+          className="w-full"
+          onClick={addItem}
         >
-          Kondisi tidak tersedia? Tambah baru
-        </button>
+          <Plus className="mr-2 size-4" />
+          Tambah Item Obat
+        </Button>
       </div>
 
       <div className="space-y-2">

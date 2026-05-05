@@ -14,11 +14,13 @@
 
 ## Todo Checklist
 
-- [ ] Hide number input spinners dengan CSS (`appearance: none`)
+- [x] Hide number input spinners dengan CSS (`appearance: none`)
 - [ ] Atau buat custom stepper dengan tombol +/-
-- [ ] Tambahkan helper text di bawah input yang membingungkan
-- [ ] Contoh helper: "Durasi per Satuan: berapa hari 1 tablet habis"
+- [x] Tambahkan helper text di bawah input yang membingungkan
+- [x] Contoh helper: "Durasi per Satuan: berapa hari 1 tablet habis"
 - [ ] Tambahkan field birth_date, lokasi, notes di QuickAddPatientModal (opsional)
 - [ ] Atau buat link "Lengkapi data" ke form penuh
-- [ ] Implement debounce 300ms pada search input Drugs page
-- [ ] Tambahkan loading state pada search
+- [x] Implement debounce 300ms pada search input Drugs page
+- [x] Tambahkan loading state pada search (sudah ada skeleton)
+
+## Status: PARTIAL ✅

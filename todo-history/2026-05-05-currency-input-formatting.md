@@ -16,13 +16,15 @@ Field harga (sell_price, buy_price, price_per_dispense) menampilkan angka mentah
 
 ## Todo Checklist
 
-- [ ] Riset library currency input (react-number-format vs custom)
-- [ ] Buat komponen `CurrencyInput` reusable di `@/components`
-- [ ] Integrasi `CurrencyInput` ke Drugs page (sell_price, buy_price)
-- [ ] Integrasi `CurrencyInput` ke TransactionForm (pricePerDispense)
-- [ ] Pastikan state tetap menyimpan number, display saja yang diformat
-- [ ] Test edge case: 0, desimal, paste dari clipboard
-- [ ] Test mobile: keyboard numerik muncul
+- [x] Riset library currency input (react-number-format vs custom)
+- [x] Buat komponen `CurrencyInput` reusable di `@/components`
+- [x] Integrasi `CurrencyInput` ke Drugs page (sell_price, buy_price)
+- [x] Integrasi `CurrencyInput` ke TransactionForm (pricePerDispense)
+- [x] Pastikan state tetap menyimpan number, display saja yang diformat
+- [x] Test edge case: 0, desimal, paste dari clipboard
+- [x] Test mobile: keyboard numerik muncul
+
+## Status: DONE ✅
 
 ## Reference
 

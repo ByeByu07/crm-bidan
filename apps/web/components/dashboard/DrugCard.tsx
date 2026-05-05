@@ -6,11 +6,12 @@ import { Pill } from "lucide-react";
 
 interface DrugCardProps {
   drug: Drug;
+  onClick?: () => void;
 }
 
-export function DrugCard({ drug }: DrugCardProps) {
+export function DrugCard({ drug, onClick }: DrugCardProps) {
   return (
-    <Card>
+    <Card className={onClick ? "cursor-pointer" : ""} onClick={onClick}>
       <CardContent className="flex items-start gap-3 p-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
           <Pill className="size-5 text-primary" />

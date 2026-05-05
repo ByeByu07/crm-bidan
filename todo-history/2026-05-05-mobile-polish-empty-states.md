@@ -15,9 +15,11 @@
 ## Todo Checklist
 
 - [ ] Implement pull-to-refresh di lists (drugs, notifications)
-- [ ] Buat komponen `EmptyState` dengan illustration/icon + CTA button
-- [ ] Integrasi `EmptyState` ke semua list view
-- [ ] Tambahkan network status listener + banner/toast offline
+- [x] Buat komponen `EmptyState` dengan illustration/icon + CTA button
+- [x] Integrasi `EmptyState` ke semua list view (Drugs, Notifications, Sales)
+- [x] Tambahkan network status listener + banner/toast offline
 - [ ] Ganti Calendar Popover dengan native date input di mobile
 - [ ] Atau perbesar Calendar popover menjadi full-width drawer
 - [ ] Test di iOS Safari dan Android Chrome
+
+## Status: PARTIAL ✅

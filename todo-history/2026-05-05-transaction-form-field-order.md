@@ -29,8 +29,10 @@ Urutan field di form transaksi tidak sesuai workflow nyata bidan. Saat ini: Pasi
 
 ## Todo Checklist
 
-- [ ] Pindahkan section "Kondisi Pasien" ke atas setelah "Pasien"
-- [ ] Pindahkan section "Tanggal Pembelian" ke posisi #3
-- [ ] Pastikan tidak ada broken state setelah reorder
-- [ ] Test validasi form masih berjalan normal
-- [ ] Cek mobile layout tetap nyaman setelah reorder
+- [x] Pindahkan section "Kondisi Pasien" ke atas setelah "Pasien"
+- [x] Pindahkan section "Tanggal Pembelian" ke posisi #3
+- [x] Pastikan tidak ada broken state setelah reorder
+- [x] Test validasi form masih berjalan normal
+- [x] Cek mobile layout tetap nyaman setelah reorder
+
+## Status: DONE ✅

@@ -63,3 +63,26 @@ export async function PATCH(
 
   return NextResponse.json({ drug: updated });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const orgId = await getActiveOrganizationId();
+  if (!orgId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const [deleted] = await db
+    .delete(drug)
+    .where(and(eq(drug.id, id), eq(drug.organizationId, orgId)))
+    .returning();
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ drug: deleted });
+}

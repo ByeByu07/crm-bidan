@@ -16,6 +16,8 @@
 - [ ] Buat halaman `/transactions` (list view)
 - [ ] Pindahkan tab "Transaksi" → `/transactions`
 - [ ] Tambahkan FAB di `/transactions` untuk ke `/transactions/new`
-- [ ] Perbesar tap area bottom nav jadi minimum 44px
-- [ ] Tambahkan badge count di tab Notifikasi (jika ada overdue/today)
-- [ ] Pertimbangkan active indicator yang lebih prominent (dot/underline)
+- [x] Perbesar tap area bottom nav jadi minimum 44px (sudah dilakukan di critical)
+- [x] Tambahkan badge count di tab Notifikasi (jika ada overdue/today)
+- [x] Pertimbangkan active indicator yang lebih prominent (dot/underline)
+
+## Status: PARTIAL ✅

@@ -16,9 +16,11 @@ Ketika tidak ada conditions atau categories, dropdown Select terbuka kosong tanp
 
 ## Todo Checklist
 
-- [ ] Tambahkan helper text di bawah Select ketika data kosong
-- [ ] Contoh: "Belum ada kondisi. Klik + untuk menambahkan."
-- [ ] Pastikan tombol "+" tetap visible dan jelas fungsinya
-- [ ] Tambahkan empty state illustration/icon di dalam SelectContent
-- [ ] Cek consistency antara condition select dan category select
-- [ ] Test scenario: user baru pertama kali buka form
+- [x] Tambahkan helper text di bawah Select ketika data kosong
+- [x] Contoh: "Belum ada kondisi. Klik + untuk menambahkan."
+- [x] Pastikan tombol "+" tetap visible dan jelas fungsinya
+- [x] Tambahkan empty state illustration/icon di dalam SelectContent
+- [x] Cek consistency antara condition select dan category select
+- [x] Test scenario: user baru pertama kali buka form
+
+## Status: DONE ✅

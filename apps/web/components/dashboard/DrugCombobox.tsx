@@ -50,7 +50,7 @@ export function DrugCombobox({ drugs, selected, onSelect }: DrugComboboxProps) {
               {drugs.map((drug) => (
                 <CommandItem
                   key={drug.id}
-                  value={drug.name}
+                  value={`${drug.name}__${drug.id}`}
                   onSelect={() => {
                     onSelect(drug);
                     setOpen(false);

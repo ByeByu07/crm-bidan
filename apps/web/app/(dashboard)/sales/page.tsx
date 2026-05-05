@@ -7,6 +7,7 @@ import { useSales } from "@/hooks/use-sales";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/card";
 import { Skeleton } from "@repo/ui/components/skeleton";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { formatCurrency, formatCurrencyShort } from "@repo/utils/format";
 import type { SalesPeriod } from "@repo/types";
 import { TrendingUp, ShoppingCart, Users, Package } from "lucide-react";
@@ -21,9 +22,9 @@ export default function SalesPage() {
         <h1 className="text-xl font-bold">Penjualan</h1>
         <Tabs value={period} onValueChange={(v) => setPeriod(v as SalesPeriod)}>
           <TabsList>
-            <TabsTrigger value="1m">1B</TabsTrigger>
-            <TabsTrigger value="3m">3B</TabsTrigger>
-            <TabsTrigger value="6m">6B</TabsTrigger>
+            <TabsTrigger value="1m">1 Bulan</TabsTrigger>
+            <TabsTrigger value="3m">3 Bulan</TabsTrigger>
+            <TabsTrigger value="6m">6 Bulan</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -56,7 +57,7 @@ export default function SalesPage() {
             icon={<Users className="size-4" />}
           />
           <MetricCard
-            title="Rata-rata"
+            title="Rata-rata per Transaksi"
             value={formatCurrencyShort(
               data?.transactionCount
                 ? (data.currentRevenue / data.transactionCount)
@@ -88,7 +89,11 @@ export default function SalesPage() {
           {isLoading ? (
             <Skeleton className="h-20" />
           ) : data?.topProducts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Belum ada data</p>
+            <EmptyState
+              icon="chart"
+              title="Belum ada data"
+              description="Data produk terlaris akan muncul setelah ada transaksi"
+            />
           ) : (
             data?.topProducts.map((product) => (
               <div

@@ -5,11 +5,12 @@ import { Button } from "@repo/ui/components/button";
 import { Badge } from "@repo/ui/components/badge";
 import type { NotificationLogItem } from "@repo/types";
 import { formatDate } from "@repo/utils/date";
-import { Phone, CheckCircle, XCircle, HelpCircle, ExternalLink } from "lucide-react";
+import { formatPhoneE164 } from "@repo/utils/format";
+import { Phone, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 
 interface NotificationCardProps {
   notification: NotificationLogItem;
-  onSend: (id: string) => void;
+  onSend?: (id: string) => void;
   onSetOutcome: (id: string, outcome: "bought" | "ignored" | "no_response") => void;
   sending?: boolean;
   settingOutcome?: boolean;
@@ -26,95 +27,76 @@ export function NotificationCard({
   const isSent = notification.status === "sent";
   const isOverdue = new Date(notification.scheduledDate) < new Date();
 
+  const waNumber = formatPhoneE164(notification.whatsappNumber).replace(/\D/g, "");
+  const waLink = `https://wa.me/${waNumber}`;
+
+  function handleWaClick() {
+    if (onSend) {
+      onSend(notification.id);
+    }
+    window.open(waLink, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-start justify-between">
-          <div>
-            <p className="font-medium">{notification.patientName}</p>
+          <div className="min-w-0">
+            <p className="font-medium truncate">{notification.patientName}</p>
             <p className="text-xs text-muted-foreground">{notification.drugName}</p>
           </div>
-          <Badge variant={isOverdue ? "destructive" : isSent ? "secondary" : "default"}>
-            {isScheduled ? "Menunggu" : isSent ? "Terkirim" : notification.status}
-          </Badge>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Phone className="size-3" />
-          <span>{notification.whatsappNumber}</span>
+          {isOverdue && (
+            <Badge variant="destructive" className="shrink-0 ml-2">
+              Terlambat
+            </Badge>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Jadwal: {formatDate(notification.scheduledDate)}
+          Estimasi habis: {formatDate(notification.scheduledDate)}
         </p>
-
-        {notification.waMessage && (
-          <p className="rounded-md bg-muted p-2 text-xs">{notification.waMessage}</p>
-        )}
 
         {isScheduled && (
           <Button
-            size="sm"
             className="w-full"
-            onClick={() => onSend(notification.id)}
+            onClick={handleWaClick}
             disabled={sending}
           >
-            <ExternalLink className="mr-1 size-3" />
-            {sending ? "Membuka..." : "Kirim WA"}
+            <Phone className="mr-2 size-4" />
+            {sending ? "Membuka..." : "Hubungi WA"}
           </Button>
         )}
 
         {isSent && !notification.outcome && (
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <Button
-              size="sm"
               variant="outline"
-              className="flex-1"
+              className="w-full"
               onClick={() => onSetOutcome(notification.id, "bought")}
               disabled={settingOutcome}
             >
-              <CheckCircle className="mr-1 size-3 text-emerald-500" />
+              <CheckCircle className="mr-2 size-4 text-emerald-500" />
               Beli
             </Button>
             <Button
-              size="sm"
               variant="outline"
-              className="flex-1"
+              className="w-full"
               onClick={() => onSetOutcome(notification.id, "ignored")}
               disabled={settingOutcome}
             >
-              <XCircle className="mr-1 size-3 text-rose-500" />
+              <XCircle className="mr-2 size-4 text-rose-500" />
               Abaikan
             </Button>
             <Button
-              size="sm"
               variant="outline"
-              className="flex-1"
+              className="w-full"
               onClick={() => onSetOutcome(notification.id, "no_response")}
               disabled={settingOutcome}
             >
-              <HelpCircle className="mr-1 size-3 text-muted-foreground" />
+              <HelpCircle className="mr-2 size-4 text-muted-foreground" />
               Tidak Respon
             </Button>
           </div>
-        )}
-
-        {notification.outcome && (
-          <Badge
-            variant={
-              notification.outcome === "bought"
-                ? "default"
-                : notification.outcome === "ignored"
-                ? "secondary"
-                : "outline"
-            }
-          >
-            {notification.outcome === "bought"
-              ? "Membeli"
-              : notification.outcome === "ignored"
-              ? "Diabaikan"
-              : "Tidak Respon"}
-          </Badge>
         )}
       </CardContent>
     </Card>

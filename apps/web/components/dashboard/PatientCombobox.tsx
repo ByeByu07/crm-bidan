@@ -39,9 +39,18 @@ export function PatientCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between h-auto py-2"
         >
-          {selected ? selected.name : "Pilih pasien..."}
+          {selected ? (
+            <div className="flex flex-col items-start text-left">
+              <span className="text-sm font-medium">{selected.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {selected.whatsappNumber}
+              </span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">Pilih pasien...</span>
+          )}
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -54,7 +63,7 @@ export function PatientCombobox({
               {patients.map((patient) => (
                 <CommandItem
                   key={patient.id}
-                  value={patient.name}
+                  value={`${patient.name}__${patient.id}`}
                   onSelect={() => {
                     onSelect(patient);
                     setOpen(false);
@@ -66,10 +75,12 @@ export function PatientCombobox({
                       selected?.id === patient.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {patient.name}
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {patient.whatsappNumber}
-                  </span>
+                  <div className="flex flex-col">
+                    <span>{patient.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {patient.whatsappNumber}
+                    </span>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>

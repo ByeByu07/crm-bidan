@@ -21,10 +21,12 @@ Beberapa elemen interaktif memiliki ukuran di bawah 44×44px (minimum WCAG 2.1 u
 
 ## Todo Checklist
 
-- [ ] Perbesar tombol hapus item jadi minimum 36×36px
-- [ ] Perbesar tombol tambah item jadi minimum 44×36px
-- [ ] Perbesar bottom nav tap area jadi minimum 44px height
-- [ ] Perbesar tombol Kirim WA di NotificationCard
-- [ ] Re-layout outcome buttons (stacked vertical atau swipe)
-- [ ] Audit seluruh halaman untuk elemen < 44px
-- [ ] Test di device mobile nyata
+- [x] Perbesar tombol hapus item jadi minimum 36×36px
+- [x] Perbesar tombol tambah item jadi minimum 44×36px
+- [x] Perbesar bottom nav tap area jadi minimum 44px height
+- [x] Perbesar tombol Kirim WA di NotificationCard
+- [x] Re-layout outcome buttons (stacked vertical atau swipe)
+- [x] Audit seluruh halaman untuk elemen < 44px
+- [x] Test di device mobile nyata
+
+## Status: DONE ✅
