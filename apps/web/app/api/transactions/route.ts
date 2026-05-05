@@ -9,7 +9,7 @@ import {
   calculateDurationDays,
   calculateNextExpectedBuy,
 } from "@repo/utils";
-import { buildWaMessage } from "@/lib/wa-message";
+
 
 const transactionItemSchema = z.object({
   drug_id: z.string().min(1),
@@ -121,11 +121,6 @@ export async function POST(request: NextRequest) {
       nextExpectedBuy: item.nextExpectedBuy,
     });
 
-    // Fetch drug name for message
-    const [d] = await db.select().from(drug).where(eq(drug.id, item.drugId)).limit(1);
-
-    const waMessage = buildWaMessage(pat.name, d?.name ?? "obat", item.nextExpectedBuy);
-
     await db.insert(notificationLog).values({
       id: crypto.randomUUID(),
       saleItemId: saleId,
@@ -133,7 +128,7 @@ export async function POST(request: NextRequest) {
       organizationId: orgId,
       scheduledDate: item.nextExpectedBuy,
       status: "pending",
-      waMessage,
+      waMessage: null,
     });
   }
 
