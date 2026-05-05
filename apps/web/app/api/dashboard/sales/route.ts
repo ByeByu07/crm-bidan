@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@repo/db";
-import { transaction, saleItem } from "@repo/db/schema";
+import { transaction, saleItem, drug } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { calculateChangePercent } from "@repo/utils";
@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     .select()
     .from(saleItem)
     .innerJoin(transaction, eq(saleItem.transactionId, transaction.id))
+    .innerJoin(drug, eq(saleItem.drugId, drug.id))
     .where(and(eq(transaction.organizationId, orgId), gte(transaction.purchaseDate, previousStart)));
 
   const currentTxs = txs.filter((t) => new Date(t.purchaseDate) >= currentStart);
@@ -75,10 +76,10 @@ export async function GET(request: NextRequest) {
   // Top products
   const productMap = new Map<string, { name: string; revenue: number; units: number }>();
   for (const row of items) {
-    if (!row.transaction || !row.sale_item) continue;
+    if (!row.transaction || !row.sale_item || !row.drug) continue;
     if (new Date(row.transaction.purchaseDate) < currentStart) continue;
     const key = row.sale_item.drugId;
-    const existing = productMap.get(key) ?? { name: key, revenue: 0, units: 0 };
+    const existing = productMap.get(key) ?? { name: row.drug.name, revenue: 0, units: 0 };
     existing.revenue += Number(row.sale_item.subtotal);
     existing.units += row.sale_item.quantityDispense;
     productMap.set(key, existing);
