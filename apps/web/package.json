@@ -11,7 +11,10 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@repo/auth": "*",
+    "@repo/types": "*",
     "@repo/ui": "*",
+    "@repo/utils": "*",
     "next": "16.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

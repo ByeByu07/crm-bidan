@@ -1,0 +1,24 @@
+{
+  "name": "@repo/auth",
+  "version": "1.0.0",
+  "description": "Better Auth configuration for BidanCRM",
+  "main": "./src/index.ts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "better-auth": "^1.4.18",
+    "@repo/db": "*",
+    "@repo/types": "*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "typescript": "5.9.2"
+  }
+}
