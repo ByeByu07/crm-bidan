@@ -15,7 +15,7 @@ export type DispenseUnit =
 
 export type PackageUnit = "box" | "strip" | "botol" | "blister" | "dus";
 
-export type NotificationStatus = "scheduled" | "sent" | "failed" | "skipped";
+export type NotificationStatus = "pending" | "sent" | "failed" | "skipped";
 
 export type NotificationOutcome = "bought" | "ignored" | "no_response" | null;
 
@@ -152,6 +152,21 @@ export interface NotificationLogItem extends NotificationLog {
   patientName: string;
   whatsappNumber: string;
   drugName: string;
+}
+
+export interface PatientTransactionHistory {
+  transactionId: string;
+  purchaseDate: Date;
+  patientCondition: string | null;
+  totalPrice: number;
+  notes: string | null;
+  items: {
+    drugName: string;
+    quantityDispense: number;
+    pricePerDispense: number;
+    subtotal: number;
+    durationDays: number | null;
+  }[];
 }
 
 // Services
