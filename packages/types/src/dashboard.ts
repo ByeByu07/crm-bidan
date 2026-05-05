@@ -2,7 +2,7 @@
 
 export type PatientCondition = string;
 
-export type DrugCategory = "vitamin" | "suplemen" | "KB" | "obat" | "lainnya";
+export type DrugCategory = string;
 
 export type DispenseUnit =
   | "tablet"
@@ -31,6 +31,13 @@ export interface Patient {
 }
 
 export interface Condition {
+  id: string;
+  organizationId: string;
+  name: string;
+  createdAt: Date;
+}
+
+export interface DrugCategoryItem {
   id: string;
   organizationId: string;
   name: string;

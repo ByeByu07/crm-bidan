@@ -16,7 +16,7 @@ export async function extractFeatures(
     ignoreRateLast3Months: 0,
     previousOutcome: null,
     patientCondition: "umum",
-    drugCategory: "obat" as DrugCategory,
+    drugCategory: "obat",
     drugPrice: 0,
     patientAge: null,
   };

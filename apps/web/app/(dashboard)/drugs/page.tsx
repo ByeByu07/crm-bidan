@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { DrugCard } from "@/components/dashboard/DrugCard";
 import { useDrugs } from "@/hooks/use-drugs";
+import { useDrugCategories } from "@/hooks/use-drug-categories";
+import { QuickAddDrugCategoryModal } from "@/components/dashboard/QuickAddDrugCategoryModal";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -25,27 +27,21 @@ import { Badge } from "@repo/ui/components/badge";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { toast } from "sonner";
 import { Plus, Search } from "lucide-react";
-import type { DrugCategory } from "@repo/types";
-
-const categories: Array<{ value: DrugCategory | "all"; label: string }> = [
-  { value: "all", label: "Semua" },
-  { value: "vitamin", label: "Vitamin" },
-  { value: "suplemen", label: "Suplemen" },
-  { value: "KB", label: "KB" },
-  { value: "obat", label: "Obat" },
-  { value: "lainnya", label: "Lainnya" },
-];
 
 export default function DrugsPage() {
   const { data, isLoading, refetch } = useDrugs();
+  const { data: categoriesData, isLoading: categoriesLoading } = useDrugCategories();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<DrugCategory | "all">("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const categories = categoriesData?.categories ?? [];
 
   const [form, setForm] = useState({
     name: "",
-    category: "obat" as DrugCategory,
+    category: "",
     dispense_unit: "tablet",
     package_unit: "box",
     units_per_package: 1,
@@ -81,7 +77,7 @@ export default function DrugsPage() {
       setOpen(false);
       setForm({
         name: "",
-        category: "obat",
+        category: "",
         dispense_unit: "tablet",
         package_unit: "box",
         units_per_package: 1,
@@ -113,16 +109,27 @@ export default function DrugsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {categories.map((cat) => (
-          <Badge
-            key={cat.value}
-            variant={activeCategory === cat.value ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setActiveCategory(cat.value)}
-          >
-            {cat.label}
-          </Badge>
-        ))}
+        <Badge
+          variant={activeCategory === "all" ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setActiveCategory("all")}
+        >
+          Semua
+        </Badge>
+        {categoriesLoading ? (
+          <Skeleton className="h-6 w-16" />
+        ) : (
+          categories.map((cat) => (
+            <Badge
+              key={cat.id}
+              variant={activeCategory === cat.name ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => setActiveCategory(cat.name)}
+            >
+              {cat.name}
+            </Badge>
+          ))
+        )}
       </div>
 
       {isLoading ? (
@@ -171,21 +178,33 @@ export default function DrugsPage() {
             </div>
             <div className="space-y-2">
               <Label>Kategori</Label>
-              <Select
-                value={form.category}
-                onValueChange={(v) => setForm({ ...form, category: v as DrugCategory })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vitamin">Vitamin</SelectItem>
-                  <SelectItem value="suplemen">Suplemen</SelectItem>
-                  <SelectItem value="KB">KB</SelectItem>
-                  <SelectItem value="obat">Obat</SelectItem>
-                  <SelectItem value="lainnya">Lainnya</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select
+                    value={form.category}
+                    onValueChange={(v) => setForm({ ...form, category: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowAddCategory(true)}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -282,6 +301,12 @@ export default function DrugsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <QuickAddDrugCategoryModal
+        open={showAddCategory}
+        onOpenChange={setShowAddCategory}
+        onCategoryAdded={(cat) => setForm((prev) => ({ ...prev, category: cat.name }))}
+      />
     </div>
   );
 }

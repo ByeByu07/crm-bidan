@@ -173,43 +173,6 @@ export function TransactionForm({
         </Popover>
       </div>
 
-      <div className="space-y-2">
-        <Label>Kondisi Pasien</Label>
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <Select
-              value={condition}
-              onValueChange={(v) => setCondition(v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih kondisi..." />
-              </SelectTrigger>
-              <SelectContent>
-                {conditions.length === 0 ? (
-                  <SelectItem value="-" disabled>
-                    Belum ada kondisi
-                  </SelectItem>
-                ) : (
-                  conditions.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
-                      {c.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={() => setShowAddCondition(true)}
-          >
-            <Plus className="size-4" />
-          </Button>
-        </div>
-      </div>
-
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label>Item Obat</Label>
@@ -283,6 +246,32 @@ export function TransactionForm({
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Kondisi Pasien</Label>
+        <Select
+          value={condition}
+          onValueChange={(v) => setCondition(v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih kondisi..." />
+          </SelectTrigger>
+          <SelectContent>
+            {conditions.map((c) => (
+              <SelectItem key={c.id} value={c.name}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <button
+          type="button"
+          onClick={() => setShowAddCondition(true)}
+          className="text-sm text-muted-foreground hover:text-primary hover:underline"
+        >
+          Kondisi tidak tersedia? Tambah baru
+        </button>
       </div>
 
       <div className="space-y-2">
