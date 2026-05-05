@@ -19,7 +19,14 @@ import { QuickAddPatientModal } from "./QuickAddPatientModal";
 import type { Drug, Patient, PatientCondition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, CalendarIcon } from "lucide-react";
+import { Calendar } from "@repo/ui/components/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/popover";
+import { formatDate } from "@repo/utils/date";
 
 interface TransactionItem {
   id: string;
@@ -134,14 +141,32 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="purchase_date">Tanggal Pembelian</Label>
-        <Input
-          id="purchase_date"
-          type="date"
-          value={purchaseDate}
-          onChange={(e) => setPurchaseDate(e.target.value)}
-          required
-        />
+        <Label>Tanggal Pembelian</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal"
+            >
+              <CalendarIcon className="mr-2 size-4" />
+              {purchaseDate ? (
+                formatDate(purchaseDate, "dd MMM yyyy")
+              ) : (
+                <span>Pilih tanggal</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={purchaseDate ? new Date(purchaseDate) : undefined}
+              onSelect={(date) =>
+                setPurchaseDate(date ? date.toISOString().split("T")[0]! : "")
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">
