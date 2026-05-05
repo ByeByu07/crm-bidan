@@ -15,9 +15,13 @@
     "@repo/types": "*",
     "@repo/ui": "*",
     "@repo/utils": "*",
+    "@tanstack/react-query": "^5.100.9",
     "next": "16.2.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "recharts": "^3.8.1",
+    "resend": "^6.12.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

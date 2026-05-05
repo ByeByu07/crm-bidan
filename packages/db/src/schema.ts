@@ -5,13 +5,12 @@ import {
   timestamp,
   decimal,
   integer,
-  jsonb,
-  unique,
+  date,
   index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-// ==================== BETTER AUTH TABLES ====================
+// ==================== BETTER AUTH CORE TABLES ====================
 
 export const user = pgTable(
   "user",
@@ -29,16 +28,10 @@ export const user = pgTable(
       .notNull(),
 
     // better-auth admin plugin fields
-    role: text("role").default("user").notNull(), // 'user' | 'admin'
+    role: text("role").default("user").notNull(),
     banned: boolean("banned"),
     banReason: text("banReason"),
     banExpires: timestamp("banExpires", { withTimezone: true }),
-
-    // Custom fields for SMS platform
-    creditBalance: decimal("creditBalance", { precision: 12, scale: 2 })
-      .default("0")
-      .notNull(),
-    webhookUrl: text("webhookUrl"),
   },
   (table) => ({
     emailIdx: index("user_email_idx").on(table.email),
@@ -62,6 +55,10 @@ export const session = pgTable(
 
     // better-auth admin plugin fields
     impersonatedBy: text("impersonatedBy"),
+
+    // better-auth organization plugin fields
+    activeOrganizationId: text("activeOrganizationId"),
+    activeTeamId: text("activeTeamId"),
   },
   (table) => ({
     userIdIdx: index("session_user_id_idx").on(table.userId),
@@ -118,374 +115,242 @@ export const verification = pgTable(
   }),
 );
 
-// ==================== BETTER AUTH API KEY PLUGIN ====================
+// ==================== BETTER AUTH ORGANIZATION TABLES ====================
 
-export const apikey = pgTable(
-  "apiKey",
-  {
-    id: text("id").primaryKey(),
-    name: text("name"),
-    start: text("start"),
-    prefix: text("prefix"),
-    key: text("key").notNull().unique(), // Hashed API key
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    refillInterval: integer("refillInterval"),
-    refillAmount: integer("refillAmount"),
-    lastRefillAt: timestamp("lastRefillAt", { withTimezone: true }),
-    enabled: boolean("enabled").default(true).notNull(),
-    rateLimitEnabled: boolean("rateLimitEnabled").default(true),
-    rateLimitTimeWindow: integer("rateLimitTimeWindow"), // milliseconds
-    rateLimitMax: integer("rateLimitMax"),
-    requestCount: integer("requestCount").default(0),
-    remaining: integer("remaining"),
-    lastRequest: timestamp("lastRequest", { withTimezone: true }),
-    expiresAt: timestamp("expiresAt", { withTimezone: true }),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    permissions: text("permissions"), // JSON string
-    metadata: text("metadata"), // JSON string
-  },
-  (table) => ({
-    userIdIdx: index("api_key_user_id_idx").on(table.userId),
-    keyIdx: index("api_key_key_idx").on(table.key),
-    enabledIdx: index("api_key_enabled_idx").on(table.enabled),
-  }),
-);
-
-// ==================== SMS PLATFORM TABLES ====================
-
-// Provider master table (minimal info - configs are hardcoded)
-// Provider master table (minimal info - configs are hardcoded)
-export const smsProviders = pgTable(
-  "sms_providers",
-  {
-    id: text("id").primaryKey(),
-    providerCode: text("providerCode").notNull().unique(), // 'onbuka', 'twilio'
-    name: text("name").notNull(),
-    isActive: boolean("isActive").default(true).notNull(),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    providerCodeIdx: index("sms_providers_code_idx").on(table.providerCode),
-    activeIdx: index("sms_providers_active_idx").on(table.isActive),
-  }),
-);
-
-// Pricing per SMS type per campaign (admin can change without deploy)
-// Campaign-specific pricing overrides global pricing (campaignId = null)
-export const providerPricing = pgTable(
-  "provider_pricing",
-  {
-    id: text("id").primaryKey(),
-    campaignId: text("campaignId").references(() => campaigns.id, {
-      onDelete: "cascade",
-    }), // null = global default
-    providerCode: text("providerCode").notNull(), // 'onbuka', 'twilio'
-    smsType: text("smsType").notNull(), // 'marketing', 'transactional', 'notification'
-    baseCost: decimal("baseCost", { precision: 12, scale: 0 }).notNull(), // IDR per SMS (whole number) - provider cost
-    finalPrice: decimal("finalPrice", { precision: 12, scale: 0 }).notNull(), // IDR per SMS (whole number) - selling price to customer
-    isActive: boolean("isActive").default(true).notNull(),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    // Unique constraint: campaign + provider + smsType (campaignId can be null for global defaults)
-    uniqueTriple: unique("campaign_provider_type_unique").on(
-      table.campaignId,
-      table.providerCode,
-      table.smsType,
-    ),
-    campaignIdx: index("provider_pricing_campaign_idx").on(table.campaignId),
-    providerIdx: index("provider_pricing_provider_idx").on(table.providerCode),
-    typeIdx: index("provider_pricing_type_idx").on(table.smsType),
-    activeIdx: index("provider_pricing_active_idx").on(table.isActive),
-  }),
-);
-
-export const campaigns = pgTable(
-  "campaigns",
+export const organization = pgTable(
+  "organization",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    description: text("description"),
-    regionCode: text("regionCode").notNull().unique(), // ISO code: 'ID', 'SG', 'MY'
-    isActive: boolean("isActive").default(true).notNull(),
+    slug: text("slug").unique(),
+    logo: text("logo"),
+    metadata: text("metadata"),
     createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => ({
-    regionCodeIdx: index("campaigns_region_code_idx").on(table.regionCode),
-    activeIdx: index("campaigns_active_idx").on(table.isActive),
+    slugIdx: index("organization_slug_idx").on(table.slug),
   }),
 );
 
-export const providerCampaigns = pgTable(
-  "provider_campaigns",
+export const member = pgTable(
+  "member",
   {
     id: text("id").primaryKey(),
-    providerCode: text("providerCode").notNull(),
-    campaignId: text("campaignId")
+    organizationId: text("organizationId")
       .notNull()
-      .references(() => campaigns.id, { onDelete: "cascade" }),
-    priority: integer("priority").default(1).notNull(), // Lower = higher priority
-    isActive: boolean("isActive").default(true).notNull(),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    campaignIdx: index("provider_campaigns_campaign_idx").on(table.campaignId),
-    providerIdx: index("provider_campaigns_provider_idx").on(
-      table.providerCode,
-    ),
-    priorityIdx: index("provider_campaigns_priority_idx").on(table.priority),
-    uniquePair: unique("provider_campaign_unique").on(
-      table.providerCode,
-      table.campaignId,
-    ),
-  }),
-);
-
-export const userCampaigns = pgTable(
-  "user_campaigns",
-  {
-    id: text("id").primaryKey(),
+      .references(() => organization.id, { onDelete: "cascade" }),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    campaignId: text("campaignId")
+    role: text("role").notNull(), // 'owner' | 'admin' | 'member'
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    orgIdx: index("member_organization_idx").on(table.organizationId),
+    userIdx: index("member_user_idx").on(table.userId),
+  }),
+);
+
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organizationId")
       .notNull()
-      .references(() => campaigns.id, { onDelete: "cascade" }),
-    grantedBy: text("grantedBy").references(() => user.id, {
-      onDelete: "set null",
-    }), // Admin who granted
+      .references(() => organization.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role").notNull(),
+    status: text("status").default("pending").notNull(), // 'pending' | 'accepted' | 'rejected' | 'canceled'
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    inviterId: text("inviterId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    orgIdx: index("invitation_organization_idx").on(table.organizationId),
+    emailIdx: index("invitation_email_idx").on(table.email),
+    statusIdx: index("invitation_status_idx").on(table.status),
+    expiresAtIdx: index("invitation_expires_at_idx").on(table.expiresAt),
+  }),
+);
+
+// ==================== DOMAIN TABLES (PRD v1.0) ====================
+
+export const patient = pgTable(
+  "patient",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    whatsappNumber: text("whatsapp_number"),
+    birthDate: date("birth_date"),
+    location: text("location"),
     notes: text("notes"),
-    grantedAt: timestamp("grantedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    lastUsedAt: timestamp("lastUsedAt", { withTimezone: true }),
-    createdAt: timestamp("createdAt", { withTimezone: true })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => ({
-    userIdx: index("user_campaigns_user_idx").on(table.userId),
-    campaignIdx: index("user_campaigns_campaign_idx").on(table.campaignId),
-    uniquePair: unique("user_campaign_unique").on(
-      table.userId,
-      table.campaignId,
-    ),
+    orgIdx: index("patient_organization_idx").on(table.organizationId),
+    nameIdx: index("patient_name_idx").on(table.name),
+    createdIdx: index("patient_created_idx").on(table.createdAt),
   }),
 );
 
-export const smsMessages = pgTable(
-  "sms_messages",
+export const patientCondition = pgTable(
+  "patient_condition",
   {
     id: text("id").primaryKey(),
-    userId: text("userId")
+    patientId: text("patient_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    // campaignId: text('campaignId').references(() => campaigns.id, { onDelete: 'restrict' }),
-    providerCode: text("providerCode"), // 'onbuka', 'twilio'
-    batchId: text("batchId"),
-    recipient: text("recipient").notNull(), // E.164 format: +628123456789
-    message: text("message").notNull(),
-    type: text("type").default("marketing").notNull(), // marketing, transactional, notification
-    status: text("status").default("pending").notNull(), // pending, queued, sent, delivered, failed
-    creditsUsed: decimal("creditsUsed", { precision: 10, scale: 4 }).notNull(),
-    providerMessageId: text("providerMessageId"),
-    providerStatus: text("providerStatus"),
-    errorMessage: text("errorMessage"),
-    sentAt: timestamp("sentAt", { withTimezone: true }),
-    deliveredAt: timestamp("deliveredAt", { withTimezone: true }),
-    failedAt: timestamp("failedAt", { withTimezone: true }),
-    webhookSent: boolean("webhookSent").default(false),
-    webhookSentAt: timestamp("webhookSentAt", { withTimezone: true }),
-    creditsDeducted: boolean("creditsDeducted").default(false), // Track if credits deducted from user
-    creditsDeductedAt: timestamp("creditsDeductedAt", { withTimezone: true }),
-    attempts: integer("attempts").default(1).notNull(),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+      .references(() => patient.id, { onDelete: "cascade" }),
+    condition: text("condition").notNull(),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    notes: text("notes"),
   },
   (table) => ({
-    userCreatedIdx: index("sms_messages_user_created_idx").on(
-      table.userId,
-      table.createdAt,
-    ),
-    // campaignIdx: index('sms_messages_campaign_idx').on(table.campaignId),
-    providerIdx: index("sms_messages_provider_idx").on(table.providerCode),
-    statusIdx: index("sms_messages_status_idx").on(table.status),
-    batchIdx: index("sms_messages_batch_idx").on(table.batchId),
-    recipientIdx: index("sms_messages_recipient_idx").on(table.recipient),
-    createdIdx: index("sms_messages_created_idx").on(table.createdAt),
-    providerMsgIdIdx: index("sms_messages_provider_msg_id_idx").on(
-      table.providerMessageId,
-    ),
-    typeIdx: index("sms_messages_type_idx").on(table.type),
+    patientIdx: index("patient_condition_patient_idx").on(table.patientId),
   }),
 );
 
-export const creditTransactions = pgTable(
-  "credit_transactions",
+export const drug = pgTable(
+  "drug",
   {
     id: text("id").primaryKey(),
-    userId: text("userId")
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    transactionType: text("transactionType").notNull(), // top_up, deduction, refund, manual_adjustment
-    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(), // Can be negative for deductions
-    balanceBefore: decimal("balanceBefore", {
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    category: text("category"),
+    dispenseUnit: text("dispense_unit").notNull(), // e.g. 'tablet', 'bottle', 'sachet'
+    packageUnit: text("package_unit").notNull(),   // e.g. 'box', 'strip'
+    unitsPerPackage: integer("units_per_package").notNull(),
+    durationPerDispenseUnit: integer("duration_per_dispense_unit"), // days per unit
+    sellPricePerDispense: decimal("sell_price_per_dispense", {
       precision: 12,
       scale: 2,
     }).notNull(),
-    balanceAfter: decimal("balanceAfter", {
+    buyPricePerPackage: decimal("buy_price_per_package", {
+      precision: 12,
+      scale: 2,
+    }),
+    isActive: boolean("is_active").default(true).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    orgIdx: index("drug_organization_idx").on(table.organizationId),
+    nameIdx: index("drug_name_idx").on(table.name),
+    activeIdx: index("drug_active_idx").on(table.isActive),
+    createdIdx: index("drug_created_idx").on(table.createdAt),
+  }),
+);
+
+export const transaction = pgTable(
+  "transaction",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "cascade" }),
+    purchaseDate: timestamp("purchase_date", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    patientCondition: text("patient_condition"),
+    totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    orgIdx: index("transaction_organization_idx").on(table.organizationId),
+    patientIdx: index("transaction_patient_idx").on(table.patientId),
+    purchaseDateIdx: index("transaction_purchase_date_idx").on(
+      table.purchaseDate,
+    ),
+    createdIdx: index("transaction_created_idx").on(table.createdAt),
+  }),
+);
+
+export const saleItem = pgTable(
+  "sale_item",
+  {
+    id: text("id").primaryKey(),
+    transactionId: text("transaction_id")
+      .notNull()
+      .references(() => transaction.id, { onDelete: "cascade" }),
+    drugId: text("drug_id")
+      .notNull()
+      .references(() => drug.id, { onDelete: "cascade" }),
+    quantityDispense: integer("quantity_dispense").notNull(),
+    pricePerDispense: decimal("price_per_dispense", {
       precision: 12,
       scale: 2,
     }).notNull(),
-    referenceType: text("referenceType"), // payment, sms_message, admin_action
-    referenceId: text("referenceId"),
-    description: text("description"),
-    createdBy: text("createdBy").references(() => user.id, {
-      onDelete: "set null",
-    }), // Admin ID if manual
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
+    durationDays: integer("duration_days"),
+    nextExpectedBuy: timestamp("next_expected_buy", { withTimezone: true }),
+    actualNextBuy: timestamp("actual_next_buy", { withTimezone: true }),
+    consumptionRate: decimal("consumption_rate", { precision: 10, scale: 4 }), // units per day
   },
   (table) => ({
-    userCreatedIdx: index("credit_transactions_user_created_idx").on(
-      table.userId,
-      table.createdAt,
-    ),
-    typeIdx: index("credit_transactions_type_idx").on(table.transactionType),
-    referenceIdx: index("credit_transactions_reference_idx").on(
-      table.referenceType,
-      table.referenceId,
+    transactionIdx: index("sale_item_transaction_idx").on(table.transactionId),
+    drugIdx: index("sale_item_drug_idx").on(table.drugId),
+    nextExpectedIdx: index("sale_item_next_expected_idx").on(
+      table.nextExpectedBuy,
     ),
   }),
 );
 
-export const paymentTransactions = pgTable(
-  "payment_transactions",
+export const notificationLog = pgTable(
+  "notification_log",
   {
     id: text("id").primaryKey(),
-    userId: text("userId")
+    saleItemId: text("sale_item_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    paymentGateway: text("paymentGateway").notNull(), // 'duitku', 'midtrans', etc.
-    gatewayTransactionId: text("gatewayTransactionId").unique(),
-    amountIdr: decimal("amountIdr", { precision: 12, scale: 0 }).notNull(), // IDR amount (whole number)
-    creditsPurchased: decimal("creditsPurchased", {
-      precision: 12,
-      scale: 2,
-    }).notNull(),
-    status: text("status").default("pending").notNull(), // pending, success, failed, expired
-    paymentMethod: text("paymentMethod"),
-    paymentUrl: text("paymentUrl"),
-    callbackData: jsonb("callbackData"),
-    paidAt: timestamp("paidAt", { withTimezone: true }),
-    expiredAt: timestamp("expiredAt", { withTimezone: true }),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    userIdx: index("payment_transactions_user_idx").on(table.userId),
-    statusIdx: index("payment_transactions_status_idx").on(table.status),
-    gatewayIdIdx: index("payment_transactions_gateway_id_idx").on(
-      table.gatewayTransactionId,
-    ),
-  }),
-);
-
-export const smsBatches = pgTable(
-  "sms_batches",
-  {
-    id: text("id").primaryKey(),
-    userId: text("userId")
+      .references(() => saleItem.id, { onDelete: "cascade" }),
+    patientId: text("patient_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    // campaignId: text('campaignId').notNull().references(() => campaigns.id, { onDelete: 'restrict' }),
-    batchName: text("batchName"),
-    totalMessages: integer("totalMessages").default(0).notNull(),
-    successfulMessages: integer("successfulMessages").default(0).notNull(),
-    failedMessages: integer("failedMessages").default(0).notNull(),
-    pendingMessages: integer("pendingMessages").default(0).notNull(),
-    totalCreditsUsed: decimal("totalCreditsUsed", { precision: 12, scale: 2 })
-      .default("0")
-      .notNull(),
-    status: text("status").default("processing").notNull(), // processing, completed, failed
-    source: text("source").notNull(), // 'web', 'api'
-    startedAt: timestamp("startedAt", { withTimezone: true }),
-    completedAt: timestamp("completedAt", { withTimezone: true }),
-    createdAt: timestamp("createdAt", { withTimezone: true })
+      .references(() => patient.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
+    status: text("status").default("pending").notNull(), // 'pending' | 'sent' | 'failed' | 'skipped'
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    outcome: text("outcome"), // 'purchased' | 'not_purchased' | 'no_response' | 'rescheduled'
+    waMessage: text("wa_message"),
+    createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => ({
-    userIdx: index("sms_batches_user_idx").on(table.userId),
-    // campaignIdx: index('sms_batches_campaign_idx').on(table.campaignId),
-    statusIdx: index("sms_batches_status_idx").on(table.status),
-  }),
-);
-
-// Provider Configuration table (region-specific credentials per provider)
-// Stores encrypted API credentials for each provider-region combination
-export const providerConfigs = pgTable(
-  "provider_configs",
-  {
-    id: text("id").primaryKey(),
-    providerCode: text("providerCode").notNull(), // 'onbuka', 'twilio', etc.
-    regionCode: text("regionCode").notNull(), // 'ID', 'SG', 'MY', etc.
-    name: text("name").notNull(), // Display name (e.g., "Onbuka Indonesia")
-    // Encrypted credentials stored as JSONB
-    // biome-ignore lint/suspicious/noExplicitAny: JSONB type - encrypted credentials stored as JSON
-    config: jsonb("config").notNull().$type<any>(),
-    isActive: boolean("isActive").default(true).notNull(),
-    lastTestedAt: timestamp("lastTestedAt", { withTimezone: true }),
-    lastTestStatus: text("lastTestStatus"), // 'success', 'failed', null
-    lastTestError: text("lastTestError"),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    providerRegionUnique: unique("provider_region_unique").on(
-      table.providerCode,
-      table.regionCode,
+    orgIdx: index("notification_log_organization_idx").on(
+      table.organizationId,
     ),
-    providerIdx: index("provider_configs_provider_idx").on(table.providerCode),
-    regionIdx: index("provider_configs_region_idx").on(table.regionCode),
-    activeIdx: index("provider_configs_active_idx").on(table.isActive),
+    patientIdx: index("notification_log_patient_idx").on(table.patientId),
+    saleItemIdx: index("notification_log_sale_item_idx").on(table.saleItemId),
+    scheduledIdx: index("notification_log_scheduled_idx").on(
+      table.scheduledDate,
+    ),
+    statusIdx: index("notification_log_status_idx").on(table.status),
+    createdIdx: index("notification_log_created_idx").on(table.createdAt),
   }),
 );
 
@@ -494,12 +359,8 @@ export const providerConfigs = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  apiKeys: many(apikey),
-  smsMessages: many(smsMessages),
-  creditTransactions: many(creditTransactions),
-  paymentTransactions: many(paymentTransactions),
-  smsBatches: many(smsBatches),
-  userCampaigns: many(userCampaigns),
+  members: many(member),
+  invitationsSent: many(invitation),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -516,102 +377,106 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const apikeyRelations = relations(apikey, ({ one, many }) => ({
+export const organizationRelations = relations(
+  organization,
+  ({ many }) => ({
+    members: many(member),
+    invitations: many(invitation),
+    patients: many(patient),
+    drugs: many(drug),
+    transactions: many(transaction),
+    notificationLogs: many(notificationLog),
+  }),
+);
+
+export const memberRelations = relations(member, ({ one }) => ({
+  organization: one(organization, {
+    fields: [member.organizationId],
+    references: [organization.id],
+  }),
   user: one(user, {
-    fields: [apikey.userId],
+    fields: [member.userId],
     references: [user.id],
   }),
 }));
 
-export const smsProvidersRelations = relations(smsProviders, ({ many }) => ({
-  smsMessages: many(smsMessages),
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id],
+  }),
+  inviter: one(user, {
+    fields: [invitation.inviterId],
+    references: [user.id],
+  }),
 }));
 
-export const providerPricingRelations = relations(
-  providerPricing,
+export const patientRelations = relations(patient, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [patient.organizationId],
+    references: [organization.id],
+  }),
+  conditions: many(patientCondition),
+  transactions: many(transaction),
+  notificationLogs: many(notificationLog),
+}));
+
+export const patientConditionRelations = relations(
+  patientCondition,
   ({ one }) => ({
-    campaign: one(campaigns, {
-      fields: [providerPricing.campaignId],
-      references: [campaigns.id],
+    patient: one(patient, {
+      fields: [patientCondition.patientId],
+      references: [patient.id],
     }),
   }),
 );
 
-export const campaignsRelations = relations(campaigns, ({ many }) => ({
-  providerCampaigns: many(providerCampaigns),
-  userCampaigns: many(userCampaigns),
-  smsMessages: many(smsMessages),
-  smsBatches: many(smsBatches),
+export const drugRelations = relations(drug, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [drug.organizationId],
+    references: [organization.id],
+  }),
+  saleItems: many(saleItem),
 }));
 
-export const providerCampaignsRelations = relations(
-  providerCampaigns,
+export const transactionRelations = relations(transaction, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [transaction.organizationId],
+    references: [organization.id],
+  }),
+  patient: one(patient, {
+    fields: [transaction.patientId],
+    references: [patient.id],
+  }),
+  saleItems: many(saleItem),
+}));
+
+export const saleItemRelations = relations(saleItem, ({ one, many }) => ({
+  transaction: one(transaction, {
+    fields: [saleItem.transactionId],
+    references: [transaction.id],
+  }),
+  drug: one(drug, {
+    fields: [saleItem.drugId],
+    references: [drug.id],
+  }),
+  notificationLogs: many(notificationLog),
+}));
+
+export const notificationLogRelations = relations(
+  notificationLog,
   ({ one }) => ({
-    campaign: one(campaigns, {
-      fields: [providerCampaigns.campaignId],
-      references: [campaigns.id],
+    saleItem: one(saleItem, {
+      fields: [notificationLog.saleItemId],
+      references: [saleItem.id],
     }),
-    // No provider relation - providerCode is used directly
-  }),
-);
-
-export const userCampaignsRelations = relations(userCampaigns, ({ one }) => ({
-  user: one(user, {
-    fields: [userCampaigns.userId],
-    references: [user.id],
-  }),
-  campaign: one(campaigns, {
-    fields: [userCampaigns.campaignId],
-    references: [campaigns.id],
-  }),
-  grantedByUser: one(user, {
-    fields: [userCampaigns.grantedBy],
-    references: [user.id],
-  }),
-}));
-
-export const smsMessagesRelations = relations(smsMessages, ({ one, many }) => ({
-  user: one(user, {
-    fields: [smsMessages.userId],
-    references: [user.id],
-  }),
-}));
-
-export const creditTransactionsRelations = relations(
-  creditTransactions,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [creditTransactions.userId],
-      references: [user.id],
+    patient: one(patient, {
+      fields: [notificationLog.patientId],
+      references: [patient.id],
     }),
-    createdByUser: one(user, {
-      fields: [creditTransactions.createdBy],
-      references: [user.id],
+    organization: one(organization, {
+      fields: [notificationLog.organizationId],
+      references: [organization.id],
     }),
   }),
 );
-
-export const paymentTransactionsRelations = relations(
-  paymentTransactions,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [paymentTransactions.userId],
-      references: [user.id],
-    }),
-  }),
-);
-
-export const smsBatchesRelations = relations(smsBatches, ({ one }) => ({
-  user: one(user, {
-    fields: [smsBatches.userId],
-    references: [user.id],
-  }),
-  // campaign: one(campaigns, {
-  //     fields: [smsBatches.campaignId],
-  //     references: [campaigns.id],
-  // }),
-}));
-
-export const providerConfigsRelations = relations(providerConfigs, () => ({
-  // No direct relations - provider configs are standalone
-}));
