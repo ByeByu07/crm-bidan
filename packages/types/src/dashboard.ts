@@ -1,10 +1,6 @@
 // Domain models for BidanCRM
 
-export type PatientCondition =
-  | "ibu_hamil"
-  | "ibu_menyusui"
-  | "umum"
-  | "lainnya";
+export type PatientCondition = string;
 
 export type DrugCategory = "vitamin" | "suplemen" | "KB" | "obat" | "lainnya";
 
@@ -31,6 +27,13 @@ export interface Patient {
   birthDate?: Date | null;
   location?: string | null;
   notes?: string | null;
+  createdAt: Date;
+}
+
+export interface Condition {
+  id: string;
+  organizationId: string;
+  name: string;
   createdAt: Date;
 }
 

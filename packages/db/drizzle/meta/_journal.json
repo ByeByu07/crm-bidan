@@ -15,6 +15,13 @@
       "when": 1777986131678,
       "tag": "0001_small_risque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777996549679,
+      "tag": "0002_spicy_captain_universe",
+      "breakpoints": true
     }
   ]
 }

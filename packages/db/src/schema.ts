@@ -223,6 +223,23 @@ export const patientCondition = pgTable(
   }),
 );
 
+export const condition = pgTable(
+  "condition",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    orgIdx: index("condition_organization_idx").on(table.organizationId),
+  }),
+);
+
 export const drug = pgTable(
   "drug",
   {
@@ -430,6 +447,13 @@ export const patientConditionRelations = relations(
     }),
   }),
 );
+
+export const conditionRelations = relations(condition, ({ one }) => ({
+  organization: one(organization, {
+    fields: [condition.organizationId],
+    references: [organization.id],
+  }),
+}));
 
 export const drugRelations = relations(drug, ({ one, many }) => ({
   organization: one(organization, {

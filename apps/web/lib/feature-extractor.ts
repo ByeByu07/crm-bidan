@@ -1,4 +1,4 @@
-import type { PatientFeatures, PatientCondition, DrugCategory } from "@repo/types";
+import type { PatientFeatures, DrugCategory } from "@repo/types";
 
 export async function extractFeatures(
   _patientId: string,
@@ -15,7 +15,7 @@ export async function extractFeatures(
     purchaseStreak: 1,
     ignoreRateLast3Months: 0,
     previousOutcome: null,
-    patientCondition: "umum" as PatientCondition,
+    patientCondition: "umum",
     drugCategory: "obat" as DrugCategory,
     drugPrice: 0,
     patientAge: null,

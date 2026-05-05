@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { TransactionForm } from "@/components/dashboard/TransactionForm";
 import { useDrugs } from "@/hooks/use-drugs";
 import { usePatients } from "@/hooks/use-patients";
+import { useConditions } from "@/hooks/use-conditions";
 import { useCreateTransaction } from "@/hooks/use-create-transaction";
 import { toast } from "sonner";
 import { Skeleton } from "@repo/ui/components/skeleton";
@@ -12,6 +13,7 @@ export default function NewTransactionPage() {
   const router = useRouter();
   const { data: drugsData, isLoading: drugsLoading } = useDrugs();
   const { data: patientsData, isLoading: patientsLoading } = usePatients();
+  const { data: conditionsData, isLoading: conditionsLoading } = useConditions();
   const createTransaction = useCreateTransaction();
 
   function handleSubmit(data: Parameters<typeof createTransaction.mutate>[0]) {
@@ -26,7 +28,7 @@ export default function NewTransactionPage() {
     });
   }
 
-  const isLoading = drugsLoading || patientsLoading;
+  const isLoading = drugsLoading || patientsLoading || conditionsLoading;
 
   return (
     <div className="space-y-4">
@@ -42,6 +44,7 @@ export default function NewTransactionPage() {
         <TransactionForm
           patients={patientsData?.patients ?? []}
           drugs={drugsData?.drugs ?? []}
+          conditions={conditionsData?.conditions ?? []}
           onSubmit={handleSubmit}
           isSubmitting={createTransaction.isPending}
         />

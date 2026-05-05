@@ -16,7 +16,8 @@ import { Card, CardContent } from "@repo/ui/components/card";
 import { PatientCombobox } from "./PatientCombobox";
 import { DrugCombobox } from "./DrugCombobox";
 import { QuickAddPatientModal } from "./QuickAddPatientModal";
-import type { Drug, Patient, PatientCondition } from "@repo/types";
+import { QuickAddConditionModal } from "./QuickAddConditionModal";
+import type { Drug, Patient, Condition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
 import { Plus, Trash2, CalendarIcon } from "lucide-react";
@@ -38,10 +39,11 @@ interface TransactionItem {
 interface TransactionFormProps {
   patients: Patient[];
   drugs: Drug[];
+  conditions: Condition[];
   onSubmit: (data: {
     patient_id: string;
     purchase_date: string;
-    patient_condition: PatientCondition;
+    patient_condition: string;
     notes: string;
     items: Array<{
       drug_id: string;
@@ -55,6 +57,7 @@ interface TransactionFormProps {
 export function TransactionForm({
   patients,
   drugs,
+  conditions,
   onSubmit,
   isSubmitting,
 }: TransactionFormProps) {
@@ -62,12 +65,13 @@ export function TransactionForm({
   const [purchaseDate, setPurchaseDate] = useState<string>(() =>
     new Date().toISOString().split("T")[0]!
   );
-  const [condition, setCondition] = useState<PatientCondition>("umum");
+  const [condition, setCondition] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransactionItem[]>([
     { id: crypto.randomUUID(), drug: null, quantityDispense: 1, pricePerDispense: 0 },
   ]);
   const [showAddPatient, setShowAddPatient] = useState(false);
+  const [showAddCondition, setShowAddCondition] = useState(false);
 
   function addItem() {
     setItems((prev) => [
@@ -171,20 +175,39 @@ export function TransactionForm({
 
       <div className="space-y-2">
         <Label>Kondisi Pasien</Label>
-        <Select
-          value={condition}
-          onValueChange={(v) => setCondition(v as PatientCondition)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ibu_hamil">Ibu Hamil</SelectItem>
-            <SelectItem value="ibu_menyusui">Ibu Menyusui</SelectItem>
-            <SelectItem value="umum">Umum</SelectItem>
-            <SelectItem value="lainnya">Lainnya</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Select
+              value={condition}
+              onValueChange={(v) => setCondition(v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kondisi..." />
+              </SelectTrigger>
+              <SelectContent>
+                {conditions.length === 0 ? (
+                  <SelectItem value="-" disabled>
+                    Belum ada kondisi
+                  </SelectItem>
+                ) : (
+                  conditions.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowAddCondition(true)}
+          >
+            <Plus className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -280,7 +303,7 @@ export function TransactionForm({
       <Button
         type="submit"
         className="w-full"
-        disabled={isSubmitting || !selectedPatient || items.some((i) => !i.drug)}
+        disabled={isSubmitting || !selectedPatient || !condition || items.some((i) => !i.drug)}
       >
         {isSubmitting ? "Menyimpan..." : "Simpan Transaksi"}
       </Button>
@@ -289,6 +312,12 @@ export function TransactionForm({
         open={showAddPatient}
         onOpenChange={setShowAddPatient}
         onPatientAdded={(patient) => setSelectedPatient(patient)}
+      />
+
+      <QuickAddConditionModal
+        open={showAddCondition}
+        onOpenChange={setShowAddCondition}
+        onConditionAdded={(c) => setCondition(c.name)}
       />
     </form>
   );
