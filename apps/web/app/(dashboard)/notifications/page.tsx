@@ -6,6 +6,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useSendNotification } from "@/hooks/use-send-notification";
 import { useSetOutcome } from "@/hooks/use-set-outcome";
 import { Skeleton } from "@repo/ui/components/skeleton";
+import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { toast } from "sonner";
 
@@ -62,7 +63,10 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Perlu Dihubungi</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Perlu Dihubungi</h1>
+        <AvatarButton />
+      </div>
 
       {isLoading ? (
         <div className="space-y-3">
@@ -82,7 +86,7 @@ export default function NotificationsPage() {
             <NotificationCard
               key={n.id}
               notification={n}
-              onSend={n.status === "scheduled" ? handleSend : undefined}
+              onSend={n.status === "pending" ? handleSend : undefined}
               onSetOutcome={handleSetOutcome}
               sending={sendingId === n.id}
               settingOutcome={outcomeId === n.id}

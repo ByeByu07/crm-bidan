@@ -28,6 +28,7 @@ import { Badge } from "@repo/ui/components/badge";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { toast } from "sonner";
 import { Plus, Search, Pencil, Trash2, Power, PowerOff } from "lucide-react";
+import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Drug } from "@repo/types";
@@ -218,7 +219,10 @@ export default function DrugsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Katalog Obat</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Katalog Obat</h1>
+        <AvatarButton />
+      </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

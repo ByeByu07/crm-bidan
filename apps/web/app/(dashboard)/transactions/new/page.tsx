@@ -6,6 +6,7 @@ import { useDrugs } from "@/hooks/use-drugs";
 import { usePatients } from "@/hooks/use-patients";
 import { useConditions } from "@/hooks/use-conditions";
 import { useCreateTransaction } from "@/hooks/use-create-transaction";
+import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { toast } from "sonner";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
@@ -32,7 +33,10 @@ export default function NewTransactionPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Transaksi Baru</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Transaksi Baru</h1>
+        <AvatarButton />
+      </div>
       {isLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-10" />

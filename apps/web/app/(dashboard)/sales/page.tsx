@@ -5,7 +5,6 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { useSales } from "@/hooks/use-sales";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/card";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { formatCurrency, formatCurrencyShort } from "@repo/utils/format";
@@ -17,7 +16,7 @@ export default function SalesPage() {
   const { data, isLoading } = useSales(period);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Penjualan</h1>
         <Tabs value={period} onValueChange={(v) => setPeriod(v as SalesPeriod)}>
@@ -68,37 +67,31 @@ export default function SalesPage() {
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Grafik Penjualan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-64" />
-          ) : (
-            <SalesChart data={data?.chartData ?? []} />
-          )}
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-sm font-semibold mb-3">Grafik Penjualan</h2>
+        {isLoading ? (
+          <Skeleton className="h-64" />
+        ) : (
+          <SalesChart data={data?.chartData ?? []} />
+        )}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Produk Terlaris</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading ? (
-            <Skeleton className="h-20" />
-          ) : data?.topProducts.length === 0 ? (
-            <EmptyState
-              icon="chart"
-              title="Belum ada data"
-              description="Data produk terlaris akan muncul setelah ada transaksi"
-            />
-          ) : (
-            data?.topProducts.map((product) => (
+      <div>
+        <h2 className="text-sm font-semibold mb-3">Produk Terlaris</h2>
+        {isLoading ? (
+          <Skeleton className="h-20" />
+        ) : data?.topProducts.length === 0 ? (
+          <EmptyState
+            icon="chart"
+            title="Belum ada data"
+            description="Data produk terlaris akan muncul setelah ada transaksi"
+          />
+        ) : (
+          <div className="space-y-0">
+            {data?.topProducts.map((product, idx) => (
               <div
                 key={product.drugId}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between py-2.5 border-b last:border-0"
               >
                 <div>
                   <p className="text-sm font-medium">{product.drugName}</p>
@@ -110,10 +103,10 @@ export default function SalesPage() {
                   {formatCurrency(product.revenue)}
                 </p>
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
