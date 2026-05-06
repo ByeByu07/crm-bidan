@@ -11,16 +11,19 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.177",
     "@repo/auth": "*",
     "@repo/types": "*",
     "@repo/ui": "*",
     "@repo/utils": "*",
     "@tanstack/react-query": "^5.100.9",
+    "ai": "^6.0.175",
     "next": "16.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.8.1",
     "resend": "^6.12.2",
+    "streamdown": "^2.5.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

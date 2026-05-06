@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Montserrat, Playfair_Display, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 import "@repo/ui/globals.css";
+import "streamdown/styles.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@repo/ui/components/sonner";

@@ -54,7 +54,12 @@ export async function GET() {
   }).length;
 
   const scheduled = enriched
-    .filter((l) => l.status === "pending" && !isOverdue(l.scheduledDate))
+    .filter((l) => {
+      const sd = new Date(l.scheduledDate);
+      return l.status === "pending"
+        && sd.getTime() >= today.getTime()
+        && sd.getTime() < addDays(today, 1).getTime();
+    })
     .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
 
   const sentPending = enriched
