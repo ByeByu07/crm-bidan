@@ -21,7 +21,7 @@ import { CurrencyInput } from "./CurrencyInput";
 import type { Drug, Patient, Condition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
-import { Plus, Trash2, CalendarIcon } from "lucide-react";
+import { Plus, Minus, Trash2, CalendarIcon } from "lucide-react";
 import { Calendar } from "@repo/ui/components/calendar";
 import {
   Popover,
@@ -241,19 +241,51 @@ export function TransactionForm({
                 selected={item.drug}
                 onSelect={(drug) => updateItem(item.id, { drug })}
               />
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Jumlah</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={item.quantityDispense}
-                    onChange={(e) =>
-                      updateItem(item.id, {
-                        quantityDispense: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      className="flex-1"
+                      value={item.quantityDispense}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) =>
+                        updateItem(item.id, {
+                          quantityDispense: parseInt(e.target.value) || 0,
+                        })
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      disabled={item.quantityDispense <= 1}
+                      onClick={() =>
+                        updateItem(item.id, {
+                          quantityDispense: Math.max(1, item.quantityDispense - 1),
+                        })
+                      }
+                    >
+                      <Minus className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() =>
+                        updateItem(item.id, {
+                          quantityDispense: item.quantityDispense + 1,
+                        })
+                      }
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Harga Satuan</Label>
@@ -265,7 +297,6 @@ export function TransactionForm({
                       })
                     }
                     placeholder="0"
-                    className="h-8"
                   />
                 </div>
               </div>
