@@ -6,42 +6,36 @@ interface MetricCardProps {
   title: string;
   value: string;
   change?: number | null;
-  icon?: React.ReactNode;
 }
 
-export function MetricCard({ title, value, change, icon }: MetricCardProps) {
+export function MetricCard({ title, value, change }: MetricCardProps) {
   const isPositive = change && change >= 0;
   const isNegative = change && change < 0;
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">{title}</p>
-            <p className="text-xl font-bold">{value}</p>
-          </div>
-          {icon && <div className="text-muted-foreground">{icon}</div>}
-        </div>
-        {change !== null && change !== undefined && (
-          <div className="mt-2 flex items-center gap-1 text-xs">
-            {isPositive ? (
-              <ArrowUpRight className="size-3 text-emerald-500" />
-            ) : (
-              <ArrowDownRight className="size-3 text-rose-500" />
-            )}
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{title}</p>
+          {change !== null && change !== undefined && (
             <span
               className={cn(
-                isPositive && "text-emerald-500",
-                isNegative && "text-rose-500"
+                "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                isPositive && "bg-emerald-500/10 text-emerald-600",
+                isNegative && "bg-rose-500/10 text-rose-600"
               )}
             >
+              {isPositive ? (
+                <ArrowUpRight className="size-2.5" />
+              ) : (
+                <ArrowDownRight className="size-2.5" />
+              )}
               {isPositive ? "+" : ""}
               {change}%
             </span>
-            <span className="text-muted-foreground">vs periode lalu</span>
-          </div>
-        )}
+          )}
+        </div>
+        <p className="mt-1 text-lg font-bold">{value}</p>
       </CardContent>
     </Card>
   );
