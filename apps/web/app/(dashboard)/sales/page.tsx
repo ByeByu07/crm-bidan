@@ -9,8 +9,6 @@ import { Skeleton } from "@repo/ui/components/skeleton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { formatCurrency, formatCurrencyShort } from "@repo/utils/format";
 import type { SalesPeriod } from "@repo/types";
-import { TrendingUp, ShoppingCart, Users, Package } from "lucide-react";
-
 export default function SalesPage() {
   const [period, setPeriod] = useState<SalesPeriod>("1m");
   const { data, isLoading } = useSales(period);
@@ -29,40 +27,36 @@ export default function SalesPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-3">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Skeleton className="h-[4.5rem]" />
+          <Skeleton className="h-[4.5rem]" />
+          <Skeleton className="h-[4.5rem]" />
+          <Skeleton className="h-[4.5rem]" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <MetricCard
             title="Pendapatan"
             value={formatCurrencyShort(data?.currentRevenue ?? 0)}
             change={data?.revenueChangePercent ?? null}
-            icon={<TrendingUp className="size-4" />}
           />
           <MetricCard
             title="Transaksi"
             value={(data?.transactionCount ?? 0).toString()}
             change={data?.transactionChangePercent ?? null}
-            icon={<ShoppingCart className="size-4" />}
           />
           <MetricCard
             title="Pasien Aktif"
             value={(data?.activePatients ?? 0).toString()}
             change={data?.activePatientsChangePercent ?? null}
-            icon={<Users className="size-4" />}
           />
           <MetricCard
-            title="Rata-rata per Transaksi"
+            title="Rata-rata"
             value={formatCurrencyShort(
               data?.transactionCount
                 ? (data.currentRevenue / data.transactionCount)
                 : 0
             )}
-            icon={<Package className="size-4" />}
           />
         </div>
       )}
