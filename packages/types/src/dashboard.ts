@@ -110,12 +110,15 @@ export interface NotificationLog {
 
 export type SalesPeriod = "1m" | "3m" | "6m";
 
-export interface MonthlySalesData {
-  month: string; // "2025-05"
+export interface SalesChartDataPoint {
+  label: string; // "2025-05" for monthly, "2025-05-06" for daily
   revenue: number;
   transactionCount: number;
   changePercent?: number | null;
 }
+
+/** @deprecated Use SalesChartDataPoint instead */
+export type MonthlySalesData = SalesChartDataPoint;
 
 export interface TopProduct {
   drugId: string;
@@ -134,7 +137,7 @@ export interface DashboardSalesData {
   activePatients: number;
   previousActivePatients: number;
   activePatientsChangePercent: number;
-  chartData: MonthlySalesData[];
+  chartData: SalesChartDataPoint[];
   topProducts: TopProduct[];
   period: SalesPeriod;
 }

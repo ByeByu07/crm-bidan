@@ -9,11 +9,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { MonthlySalesData } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
+import type { SalesChartDataPoint } from "@repo/types";
 
 interface SalesChartProps {
-  data: MonthlySalesData[];
+  data: SalesChartDataPoint[];
 }
 
 export function SalesChart({ data }: SalesChartProps) {
@@ -23,9 +23,17 @@ export function SalesChart({ data }: SalesChartProps) {
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
-            dataKey="month"
+            dataKey="label"
             tickFormatter={(value: string) => {
               const parts = value.split("-");
+              if (parts.length === 3) {
+                // Daily format: "2025-05-06" → "6 Mei"
+                const day = Number(parts[2]);
+                const monthNames = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+                const monthIdx = Number(parts[1]) - 1;
+                return `${day} ${monthNames[monthIdx] ?? ""}`;
+              }
+              // Monthly format: "2025-05" → "05/25"
               const year = parts[0] ?? "";
               const month = parts[1] ?? "";
               return `${month}/${year.slice(2)}`;
@@ -51,6 +59,12 @@ export function SalesChart({ data }: SalesChartProps) {
             formatter={(value: any) => formatCurrency(Number(value))}
             labelFormatter={(label: any) => {
               const parts = String(label).split("-");
+              if (parts.length === 3) {
+                const day = Number(parts[2]);
+                const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+                const monthIdx = Number(parts[1]) - 1;
+                return `${day} ${monthNames[monthIdx] ?? ""} ${parts[0]}`;
+              }
               const year = parts[0] ?? "";
               const month = parts[1] ?? "";
               return `${month}/${year}`;
