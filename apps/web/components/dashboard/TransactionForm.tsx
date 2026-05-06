@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -41,6 +41,7 @@ interface TransactionFormProps {
   patients: Patient[];
   drugs: Drug[];
   conditions: Condition[];
+  preselectedPatientId?: string;
   onSubmit: (data: {
     patient_id: string;
     purchase_date: string;
@@ -59,6 +60,7 @@ export function TransactionForm({
   patients,
   drugs,
   conditions,
+  preselectedPatientId,
   onSubmit,
   isSubmitting,
 }: TransactionFormProps) {
@@ -73,6 +75,15 @@ export function TransactionForm({
   ]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [showAddCondition, setShowAddCondition] = useState(false);
+
+  useEffect(() => {
+    if (preselectedPatientId && patients.length > 0) {
+      const found = patients.find((p) => p.id === preselectedPatientId);
+      if (found) {
+        setSelectedPatient(found);
+      }
+    }
+  }, [preselectedPatientId, patients]);
 
   function addItem() {
     setItems((prev) => [

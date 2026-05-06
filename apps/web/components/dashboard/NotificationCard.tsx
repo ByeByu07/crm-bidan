@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@repo/ui/components/card";
 import { Button } from "@repo/ui/components/button";
 import { Badge } from "@repo/ui/components/badge";
@@ -38,6 +39,7 @@ export function NotificationCard({
   const isSent = notification.status === "sent";
   const isOverdue = new Date(notification.scheduledDate) < new Date();
   const [expanded, setExpanded] = useState(false);
+  const router = useRouter();
 
   const {
     data: historyData,
@@ -54,6 +56,12 @@ export function NotificationCard({
       onSend(notification.id);
     }
     window.open(waLink, "_blank", "noopener,noreferrer");
+  }
+
+  function handleBuy() {
+    router.push(
+      `/transactions/new?patient_id=${notification.patientId}&notification_id=${notification.id}`
+    );
   }
 
   return (
@@ -166,8 +174,7 @@ export function NotificationCard({
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => onSetOutcome(notification.id, "bought")}
-              disabled={settingOutcome}
+              onClick={handleBuy}
             >
               <CheckCircle className="mr-2 size-4 text-emerald-500" />
               Beli
