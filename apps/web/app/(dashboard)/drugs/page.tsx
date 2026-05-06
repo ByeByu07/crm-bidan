@@ -234,28 +234,27 @@ export default function DrugsPage() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Badge
-          variant={activeCategory === "all" ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => setActiveCategory("all")}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          Kategori
+        </span>
+        <Select
+          value={activeCategory}
+          onValueChange={setActiveCategory}
+          disabled={categoriesLoading}
         >
-          Semua
-        </Badge>
-        {categoriesLoading ? (
-          <Skeleton className="h-6 w-16" />
-        ) : (
-          categories.map((cat) => (
-            <Badge
-              key={cat.id}
-              variant={activeCategory === cat.name ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setActiveCategory(cat.name)}
-            >
-              {cat.name}
-            </Badge>
-          ))
-        )}
+          <SelectTrigger className="w-full sm:w-[240px]">
+            <SelectValue placeholder="Pilih kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.name}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
