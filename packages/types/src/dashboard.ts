@@ -151,7 +151,6 @@ export interface NotificationQueue {
 export interface NotificationLogItem extends NotificationLog {
   patientName: string;
   whatsappNumber: string;
-  drugName: string;
 }
 
 export interface PatientTransactionHistory {

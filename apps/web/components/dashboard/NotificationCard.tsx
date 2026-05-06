@@ -62,7 +62,6 @@ export function NotificationCard({
         <div className="flex items-start justify-between">
           <div className="min-w-0">
             <p className="font-medium truncate">{notification.patientName}</p>
-            <p className="text-xs text-muted-foreground">{notification.drugName}</p>
           </div>
           {isOverdue && (
             <Badge variant="destructive" className="shrink-0 ml-2">
