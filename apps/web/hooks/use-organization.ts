@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@repo/auth";
 
 interface ActiveOrganization {
@@ -13,28 +13,21 @@ interface ActiveOrganization {
 }
 
 export function useOrganization() {
-  const [organization, setOrganization] = useState<ActiveOrganization | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    authClient.organization.getFullOrganization()
-      .then(({ data }) => {
-        if (data) {
-          setOrganization({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            logo: data.logo || null,
-            metadata: data.metadata || null,
-            createdAt: new Date(data.createdAt),
-          });
-        }
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setIsLoading(false);
-      });
-  }, []);
-
-  return { organization, isLoading };
+  return useQuery<ActiveOrganization | null>({
+    queryKey: ["organization"],
+    queryFn: async () => {
+      const { data } = await authClient.organization.getFullOrganization();
+      if (!data) return null;
+      return {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logo: data.logo || null,
+        metadata: data.metadata || null,
+        createdAt: new Date(data.createdAt),
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { authClient } from "@repo/auth";
+import { useProfile } from "@/hooks/use-profile";
 import { useOrganization } from "@/hooks/use-organization";
+import { authClient } from "@repo/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/skeleton";
@@ -15,33 +15,18 @@ interface ProfileSheetProps {
 }
 
 export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
-  const { organization, isLoading: orgLoading } = useOrganization();
-  const [user, setUser] = useState<{ name: string; email: string; image?: string | null } | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
-
-  useEffect(() => {
-    if (!open) return;
-    authClient.getSession().then(({ data }) => {
-      if (data?.user) {
-        setUser({
-          name: data.user.name || "",
-          email: data.user.email || "",
-          image: data.user.image,
-        });
-      }
-      setUserLoading(false);
-    });
-  }, [open]);
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: organization, isLoading: orgLoading } = useOrganization();
 
   async function handleLogout() {
     await authClient.signOut();
     window.location.href = "/signin";
   }
 
-  const isLoading = userLoading || orgLoading;
+  const isLoading = profileLoading || orgLoading;
 
-  const avatarSrc = organization?.logo || user?.image || null;
-  const initials = (organization?.name?.[0] || user?.name?.[0] || "U").toUpperCase();
+  const avatarSrc = organization?.logo || profile?.image || null;
+  const initials = (organization?.name?.[0] || profile?.name?.[0] || "U").toUpperCase();
 
   return (
     <>
@@ -99,10 +84,10 @@ export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{user?.name}</p>
+                  <p className="text-sm font-semibold truncate">{profile?.name}</p>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Mail className="size-3 shrink-0" />
-                    <span className="truncate">{user?.email}</span>
+                    <span className="truncate">{profile?.email}</span>
                   </div>
                 </div>
               </div>

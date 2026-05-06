@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { authClient } from "@repo/auth";
+import { useState } from "react";
+import { useProfile } from "@/hooks/use-profile";
 import { useOrganization } from "@/hooks/use-organization";
 import { ProfileSheet } from "./ProfileSheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
@@ -14,27 +14,14 @@ interface AvatarButtonProps {
 
 export function AvatarButton({ className }: AvatarButtonProps) {
   const [open, setOpen] = useState(false);
-  const { organization, isLoading: orgLoading } = useOrganization();
-  const [user, setUser] = useState<{ name: string; image?: string | null } | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: organization, isLoading: orgLoading } = useOrganization();
 
-  useEffect(() => {
-    authClient.getSession().then(({ data }) => {
-      if (data?.user) {
-        setUser({
-          name: data.user.name || "",
-          image: data.user.image,
-        });
-      }
-      setUserLoading(false);
-    });
-  }, []);
-
-  const isLoading = userLoading || orgLoading;
+  const isLoading = profileLoading || orgLoading;
 
   // Priority: org logo → user image → initials
-  const avatarSrc = organization?.logo || user?.image || null;
-  const initials = (organization?.name?.[0] || user?.name?.[0] || "U").toUpperCase();
+  const avatarSrc = organization?.logo || profile?.image || null;
+  const initials = (organization?.name?.[0] || profile?.name?.[0] || "U").toUpperCase();
 
   return (
     <>
@@ -52,7 +39,7 @@ export function AvatarButton({ className }: AvatarButtonProps) {
           <Skeleton className="size-9 rounded-full" />
         ) : (
           <Avatar className="size-9">
-            <AvatarImage src={avatarSrc || undefined} alt={user?.name || "User"} />
+            <AvatarImage src={avatarSrc || undefined} alt={profile?.name || "User"} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
               {initials}
             </AvatarFallback>
