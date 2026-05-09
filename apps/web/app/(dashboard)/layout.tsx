@@ -11,9 +11,9 @@ export default async function DashboardLayout({
   await requireAuth();
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="bidan-dashboard min-h-screen pb-20">
       <OfflineBanner />
-      <main className="mx-auto max-w-md px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-[430px] px-5 py-6">{children}</main>
       <BottomNav />
     </div>
   );

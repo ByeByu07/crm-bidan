@@ -1,0 +1,1003 @@
+/* ─── BidanCRM Design System ───
+   Warm, editorial mobile-first UI
+   Coexists with Tailwind CSS / shadcn/ui
+*/
+
+/* ─── CSS Variables ─── */
+:root {
+  --bidan-bg: #f9f7f4;
+  --bidan-surface: #ffffff;
+  --bidan-fg: #2a2118;
+  --bidan-muted: #7a6e63;
+  --bidan-border: #e8e0d8;
+  --bidan-accent: #c4704b;
+
+  --bidan-shadow-card: 0 1px 5px -4px rgba(30, 25, 20, 0.07),
+    0 0 0 1px rgba(60, 55, 50, 0.06), 0 4px 8px rgba(60, 55, 50, 0.04);
+  --bidan-shadow-hover: 0 1px 5px -4px rgba(30, 25, 20, 0.1),
+    0 0 0 1px rgba(60, 55, 50, 0.08), 0 8px 16px rgba(60, 55, 50, 0.06);
+}
+
+/* ─── Dark Mode ───
+   Scoped to :root so portal content (drawers, toasts) also gets dark variables
+*/
+.dark {
+  --bidan-bg: #1c1917;
+  --bidan-surface: #292524;
+  --bidan-fg: #fafaf9;
+  --bidan-muted: #a8a29e;
+  --bidan-border: #44403c;
+  --bidan-accent: #c4704b;
+
+  --bidan-shadow-card: 0 1px 5px -4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0, 0, 0, 0.2);
+  --bidan-shadow-hover: 0 1px 5px -4px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --bidan-r-sm: 6px;
+  --bidan-r-md: 10px;
+  --bidan-r-lg: 14px;
+  --bidan-r-pill: 9999px;
+
+  --bidan-s1: 4px;
+  --bidan-s2: 8px;
+  --bidan-s3: 12px;
+  --bidan-s4: 16px;
+  --bidan-s5: 20px;
+}
+
+/* ─── Dashboard Scope ─── */
+.bidan-dashboard {
+  background: var(--bidan-bg);
+  color: var(--bidan-fg);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bidan-dashboard * {
+  box-sizing: border-box;
+}
+
+/* ─── Typography Utilities ─── */
+.bidan-dashboard .d {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--bidan-fg);
+}
+
+.bidan-dashboard .t {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: +0.2px;
+  color: var(--bidan-fg);
+}
+
+.bidan-dashboard .h {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--bidan-fg);
+}
+
+.bidan-dashboard .b {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bidan-muted);
+}
+
+.bidan-dashboard .c {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bidan-muted);
+}
+
+/* ─── Card ─── */
+.bidan-dashboard .card {
+  background: var(--bidan-surface);
+  border-radius: var(--bidan-r-lg);
+  box-shadow: var(--bidan-shadow-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.bidan-dashboard .card:active {
+  box-shadow: var(--bidan-shadow-hover);
+}
+
+/* ─── Pills ─── */
+.bidan-dashboard .pillrow {
+  display: flex;
+  gap: var(--bidan-s2);
+  margin-bottom: var(--bidan-s5);
+  overflow-x: auto;
+  padding-bottom: var(--bidan-s1);
+  scrollbar-width: none;
+}
+
+.bidan-dashboard .pillrow::-webkit-scrollbar {
+  display: none;
+}
+
+.bidan-dashboard .pill {
+  flex-shrink: 0;
+  padding: var(--bidan-s2) var(--bidan-s4);
+  border-radius: var(--bidan-r-pill);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bidan-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.bidan-dashboard .pill:hover {
+  background: rgba(60, 55, 50, 0.04);
+}
+
+.bidan-dashboard .pill.on {
+  background: var(--bidan-fg);
+  color: var(--bidan-surface);
+  border-color: var(--bidan-fg);
+}
+
+/* ─── Section header ─── */
+.bidan-dashboard .sec {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--bidan-s4);
+}
+
+/* ─── Search ─── */
+.bidan-dashboard .sw {
+  position: relative;
+  margin-bottom: var(--bidan-s4);
+}
+
+.bidan-dashboard .si {
+  width: 100%;
+  padding: var(--bidan-s3) var(--bidan-s4);
+  padding-left: 40px;
+  border-radius: var(--bidan-r-pill);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-surface);
+  font-family: var(--font-sans), sans-serif;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  outline: none;
+}
+
+.bidan-dashboard .si::placeholder {
+  color: var(--bidan-muted);
+}
+
+.bidan-dashboard .si:focus {
+  box-shadow: 0 0 0 3px rgba(196, 112, 75, 0.15);
+}
+
+.bidan-dashboard .ss {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--bidan-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Form ─── */
+.bidan-dashboard .fg {
+  margin-bottom: var(--bidan-s4);
+}
+
+.bidan-dashboard .fl {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bidan-muted);
+  margin-bottom: var(--bidan-s2);
+  font-family: var(--font-sans), sans-serif;
+}
+
+.bidan-dashboard .fi,
+.bidan-dashboard .fs {
+  width: 100%;
+  padding: var(--bidan-s3) var(--bidan-s4);
+  border-radius: var(--bidan-r-md);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-bg);
+  font-family: var(--font-sans), sans-serif;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  outline: none;
+}
+
+.bidan-dashboard .fi:focus,
+.bidan-dashboard .fs:focus {
+  box-shadow: 0 0 0 3px rgba(196, 112, 75, 0.15);
+}
+
+.bidan-dashboard .fi::placeholder {
+  color: var(--bidan-muted);
+}
+
+.bidan-dashboard .fr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--bidan-s3);
+}
+
+/* ─── Buttons ─── */
+.bidan-dashboard .bp,
+.bidan-dashboard .bg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: var(--bidan-s3) var(--bidan-s4);
+  border-radius: var(--bidan-r-md);
+  font-family: var(--font-sans), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.bidan-dashboard .bp {
+  border: none;
+  background: var(--bidan-fg);
+  color: var(--bidan-surface);
+}
+
+.bidan-dashboard .bp:active {
+  opacity: 0.8;
+}
+
+.bidan-dashboard .bp:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bidan-dashboard .bg {
+  border: 1px solid var(--bidan-border);
+  background: transparent;
+  color: var(--bidan-fg);
+  font-weight: 500;
+}
+
+.bidan-dashboard .bg:active {
+  background: var(--bidan-bg);
+}
+
+.bidan-dashboard .bg:active {
+  background: var(--bidan-bg);
+}
+
+/* ─── KPI Grid ─── */
+.bidan-dashboard .kg {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--bidan-s3);
+  margin-bottom: var(--bidan-s5);
+}
+
+.bidan-dashboard .kc {
+  padding: var(--bidan-s4);
+}
+
+.bidan-dashboard .kh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--bidan-s3);
+}
+
+.bidan-dashboard .kl {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bidan-muted);
+  letter-spacing: 0.02em;
+}
+
+.bidan-dashboard .kb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 7px;
+  border-radius: var(--bidan-r-pill);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.bidan-dashboard .kb.up {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.bidan-dashboard .kb.down {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.bidan-dashboard .kv {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--bidan-fg);
+}
+
+/* ─── Chart ─── */
+.bidan-dashboard .cw {
+  position: relative;
+  height: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--bidan-s2);
+  padding-block-end: var(--bidan-s4);
+  padding-inline: var(--bidan-s1);
+}
+
+.bidan-dashboard .cc {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bidan-s2);
+  min-width: 0;
+}
+
+.bidan-dashboard .cb {
+  width: 100%;
+  max-width: 28px;
+  background: var(--bidan-fg);
+  border-radius: var(--bidan-r-sm) var(--bidan-r-sm) 0 0;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+  position: relative;
+}
+
+.bidan-dashboard .clb {
+  font-size: 10px;
+  color: var(--bidan-muted);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ─── Notification Card ─── */
+.bidan-dashboard .nc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bidan-s3);
+  padding: var(--bidan-s4);
+  margin-bottom: var(--bidan-s3);
+}
+
+.bidan-dashboard .nc .row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bidan-s2);
+}
+
+.bidan-dashboard .nc .name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bidan-dashboard .nc .msg {
+  font-size: 13px;
+  color: var(--bidan-muted);
+  line-height: 1.4;
+}
+
+.bidan-dashboard .nc .meta {
+  display: flex;
+  align-items: center;
+  gap: var(--bidan-s2);
+  margin-top: var(--bidan-s2);
+}
+
+.bidan-dashboard .nc .date {
+  font-size: 11px;
+  color: var(--bidan-muted);
+}
+
+.bidan-dashboard .nc .tag {
+  padding: 2px 8px;
+  border-radius: var(--bidan-r-pill);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ─── Outcome buttons ─── */
+.bidan-dashboard .ob {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bidan-s2);
+  margin-top: var(--bidan-s2);
+}
+
+.bidan-dashboard .ob button {
+  width: 100%;
+  padding: var(--bidan-s3) var(--bidan-s4);
+  border-radius: var(--bidan-r-md);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-surface);
+  font-family: var(--font-sans), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bidan-s2);
+  transition: background 0.15s ease;
+}
+
+.bidan-dashboard .ob button:active {
+  background: var(--bidan-bg);
+}
+
+.bidan-dashboard .ob .buy {
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.bidan-dashboard .ob .ignore {
+  border-color: #c62828;
+  color: #c62828;
+}
+
+.bidan-dashboard .ob .nores {
+  color: var(--bidan-muted);
+}
+
+/* ─── Transaction Card ─── */
+.bidan-dashboard .txc {
+  display: flex;
+  align-items: center;
+  gap: var(--bidan-s3);
+  padding: var(--bidan-s4);
+  margin-bottom: var(--bidan-s3);
+}
+
+.bidan-dashboard .txi {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--bidan-r-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bidan-dashboard .txi.in {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.bidan-dashboard .txn {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bidan-dashboard .txm {
+  font-size: 12px;
+  color: var(--bidan-muted);
+  margin-top: 2px;
+}
+
+.bidan-dashboard .txa {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 15px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bidan-dashboard .txa.in {
+  color: #2e7d32;
+}
+
+/* ─── Drug Card ─── */
+.bidan-dashboard .dc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--bidan-s3) var(--bidan-s4);
+  margin-bottom: var(--bidan-s3);
+  cursor: pointer;
+}
+
+.bidan-dashboard .dc .name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bidan-dashboard .dc .row {
+  display: flex;
+  align-items: center;
+  gap: var(--bidan-s2);
+  margin-top: 2px;
+}
+
+.bidan-dashboard .dc .cat {
+  font-size: 12px;
+  color: var(--bidan-muted);
+}
+
+.bidan-dashboard .dc .price {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  margin-left: auto;
+}
+
+.bidan-dashboard .dc .inactive {
+  font-size: 12px;
+  color: #c62828;
+}
+
+/* ─── Product Row ─── */
+.bidan-dashboard .pr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bidan-s3) 0;
+  border-bottom: 1px solid var(--bidan-border);
+  gap: var(--bidan-s3);
+}
+
+.bidan-dashboard .pr:last-child {
+  border-bottom: none;
+}
+
+.bidan-dashboard .pn {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bidan-dashboard .pm {
+  font-size: 12px;
+  color: var(--bidan-muted);
+  margin-top: 2px;
+}
+
+.bidan-dashboard .pp {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bidan-fg);
+  white-space: nowrap;
+}
+
+/* ─── Date Divider ─── */
+.bidan-dashboard .dd {
+  display: flex;
+  align-items: center;
+  gap: var(--bidan-s3);
+  margin: var(--bidan-s4) 0 var(--bidan-s3);
+}
+
+.bidan-dashboard .dd::before,
+.bidan-dashboard .dd::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--bidan-border);
+}
+
+.bidan-dashboard .dd span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bidan-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ─── Avatar ─── */
+.bidan-dashboard .av {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--bidan-r-pill);
+  background: var(--bidan-accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* ─── AI box ─── */
+.bidan-dashboard .ai {
+  font-size: 12px;
+  color: var(--bidan-muted);
+  padding: var(--bidan-s2) var(--bidan-s3);
+  background: #f5f5f5;
+  border-radius: var(--bidan-r-sm);
+  margin-top: var(--bidan-s2);
+}
+
+/* ─── Category Pills ─── */
+.bidan-dashboard .cat-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.bidan-dashboard .cat-pill {
+  padding: 4px 12px;
+  border-radius: var(--bidan-r-pill);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bidan-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.bidan-dashboard .cat-pill.on {
+  background: var(--bidan-fg);
+  color: var(--bidan-surface);
+  border-color: var(--bidan-fg);
+}
+
+.bidan-dashboard .cat-pill.add {
+  border-style: dashed;
+}
+
+/* ─── Stepper ─── */
+.bidan-dashboard .stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--bidan-border);
+  border-radius: var(--bidan-r-md);
+  overflow: hidden;
+  width: 100%;
+}
+
+.bidan-dashboard .stepper-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--bidan-surface);
+  border: none;
+  color: var(--bidan-fg);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.bidan-dashboard .stepper-btn:active {
+  background: var(--bidan-bg);
+}
+
+.bidan-dashboard .stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.bidan-dashboard .stepper-val {
+  flex: 1;
+  text-align: left;
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--bidan-fg);
+  padding: 0 12px;
+  user-select: none;
+}
+
+/* ─── Add Item Button ─── */
+.bidan-dashboard .btn-add-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--bidan-r-md);
+  border: 1px dashed var(--bidan-border);
+  background: transparent;
+  color: var(--bidan-muted);
+  font-family: var(--font-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bidan-dashboard .btn-add-item:active {
+  background: var(--bidan-bg);
+  color: var(--bidan-fg);
+}
+
+/* ─── FAB ─── */
+.bidan-dashboard .fab {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--bidan-s4));
+  right: max(var(--bidan-s4), calc(50% - 215px + var(--bidan-s4)));
+  z-index: 55;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--bidan-r-pill);
+  background: var(--bidan-fg);
+  color: var(--bidan-surface);
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(20, 15, 10, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.bidan-dashboard .fab:active {
+  transform: scale(0.95);
+}
+
+.bidan-dashboard .fab svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ─── Bottom Nav ─── */
+.bidan-dashboard .bn {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 50;
+  background: var(--bidan-surface);
+  border-top: 1px solid var(--bidan-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.bidan-dashboard .bl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: var(--bidan-s2) var(--bidan-s3);
+  min-width: 64px;
+  min-height: 48px;
+  border-radius: var(--bidan-r-md);
+  color: var(--bidan-muted);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.bidan-dashboard .bl.on {
+  color: var(--bidan-fg);
+}
+
+.bidan-dashboard .bl svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bidan-dashboard .bl.on::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: var(--bidan-r-pill);
+  background: var(--bidan-accent);
+}
+
+/* ─── Profile Sheet ─── */
+.bidan-dashboard .pso {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 15, 10, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.bidan-dashboard .pso.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bidan-dashboard .ps {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 101;
+  background: var(--bidan-surface);
+  border-radius: var(--bidan-r-lg) var(--bidan-r-lg) 0 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 85dvh;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.bidan-dashboard .ps.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.bidan-dashboard .psh {
+  display: flex;
+  align-items: center;
+  gap: var(--bidan-s3);
+  border-bottom: 1px solid var(--bidan-border);
+  padding: var(--bidan-s3) var(--bidan-s4);
+}
+
+.bidan-dashboard .psc {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--bidan-s4);
+}
+
+/* ─── Modal ─── */
+.bidan-dashboard .mo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 15, 10, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.bidan-dashboard .mo.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bidan-dashboard .ms {
+  width: 100%;
+  max-width: 430px;
+  background: var(--bidan-surface);
+  border-radius: var(--bidan-r-lg) var(--bidan-r-lg) 0 0;
+  padding: var(--bidan-s5);
+  padding-bottom: calc(var(--bidan-s5) + env(safe-area-inset-bottom, 0px));
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+
+.bidan-dashboard .mo.open .ms {
+  transform: translateY(0);
+}
+
+.bidan-dashboard .mh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--bidan-s5);
+}
+
+.bidan-dashboard .mt {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--bidan-fg);
+}
+
+.bidan-dashboard .cl {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--bidan-r-pill);
+  border: 1px solid var(--bidan-border);
+  background: var(--bidan-bg);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--bidan-fg);
+  flex-shrink: 0;
+}
+
+/* ─── Toast override ─── */
+.bidan-dashboard [data-sonner-toast] {
+  font-family: var(--font-sans), sans-serif !important;
+  background: var(--bidan-fg) !important;
+  color: var(--bidan-surface) !important;
+  border-radius: var(--bidan-r-pill) !important;
+  padding: var(--bidan-s3) var(--bidan-s5) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: var(--bidan-shadow-hover) !important;
+  border: none !important;
+}
+
+.bidan-dashboard [data-sonner-toast] [data-close-button] {
+  background: transparent !important;
+  color: var(--bidan-surface) !important;
+  border: none !important;
+}
+
+/* ─── Scrollbar hide utility ─── */
+.bidan-dashboard .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.bidan-dashboard .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── shadcn overrides inside dashboard ─── */
+.bidan-dashboard [data-radix-popper-content-wrapper] {
+  z-index: 60 !important;
+}
+
+/* Ensure our card shadows override shadcn Card shadow */
+.bidan-dashboard .card-shadow {
+  box-shadow: var(--bidan-shadow-card) !important;
+}
+
+.bidan-dashboard .card-shadow-hover:active {
+  box-shadow: var(--bidan-shadow-hover) !important;
+}

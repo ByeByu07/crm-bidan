@@ -6,9 +6,11 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useSendNotification } from "@/hooks/use-send-notification";
 import { useSetOutcome } from "@/hooks/use-set-outcome";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { Pills } from "@/components/design-system/Pills";
 import { toast } from "sonner";
+
+const filters = ["Semua", "Belum Dikirim", "Sudah Dikirim"];
 
 export default function NotificationsPage() {
   const { data, isLoading } = useNotifications();
@@ -16,6 +18,7 @@ export default function NotificationsPage() {
   const setOutcome = useSetOutcome();
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("Semua");
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -25,6 +28,12 @@ export default function NotificationsPage() {
         new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
     );
   }, [data]);
+
+  const filteredItems = useMemo(() => {
+    if (filter === "Belum Dikirim") return items.filter((n) => n.status === "pending");
+    if (filter === "Sudah Dikirim") return items.filter((n) => n.status === "sent");
+    return items;
+  }, [items, filter]);
 
   function handleSend(id: string) {
     setSendingId(id);
@@ -61,20 +70,40 @@ export default function NotificationsPage() {
     );
   }
 
+  const pendingCount = items.filter((n) => n.status === "pending").length;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Perlu Dihubungi</h1>
-        <AvatarButton />
-      </div>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <h1 className="t">Notifikasi</h1>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: "22px",
+            height: "22px",
+            padding: "0 7px",
+            borderRadius: "9999px",
+            background: "var(--bidan-accent)",
+            color: "#fff",
+            fontSize: "12px",
+            fontWeight: 600,
+          }}
+        >
+          {pendingCount}
+        </span>
+      </header>
+
+      <Pills options={filters} active={filter} onChange={setFilter} />
 
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+          <Skeleton className="h-32 rounded-[14px]" />
+          <Skeleton className="h-32 rounded-[14px]" />
+          <Skeleton className="h-32 rounded-[14px]" />
         </div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <EmptyState
           icon="bell"
           title="Tidak ada notifikasi"
@@ -82,7 +111,7 @@ export default function NotificationsPage() {
         />
       ) : (
         <div className="space-y-3">
-          {items.map((n) => (
+          {filteredItems.map((n) => (
             <NotificationCard
               key={n.id}
               notification={n}

@@ -2,18 +2,9 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/components/dialog";
-import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
 import { toast } from "sonner";
+import { BottomSheet } from "@/components/design-system/BottomSheet";
 import type { Condition } from "@repo/types";
 
 interface QuickAddConditionModalProps {
@@ -74,32 +65,23 @@ export function QuickAddConditionModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tambah Kondisi Baru</DialogTitle>
-          <DialogDescription>
-            Tambahkan kondisi pasien yang dapat dipilih saat transaksi
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="condition_name">Nama Kondisi</Label>
-            <Input
-              id="condition_name"
-              placeholder="Contoh: Ibu Hamil, Diabetes, dll"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Menyimpan..." : "Simpan"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <BottomSheet open={open} onClose={() => onOpenChange(false)} title="Tambah Kondisi Baru">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fg">
+          <label className="fl">Nama Kondisi</label>
+          <Input
+            id="condition_name"
+            placeholder="Contoh: Ibu Hamil, Diabetes, dll"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="fi"
+          />
+        </div>
+        <button type="submit" className="bp" disabled={loading}>
+          {loading ? "Menyimpan..." : "Simpan"}
+        </button>
+      </form>
+    </BottomSheet>
   );
 }

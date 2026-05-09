@@ -2,18 +2,9 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/components/dialog";
-import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
 import { toast } from "sonner";
+import { BottomSheet } from "@/components/design-system/BottomSheet";
 import type { Patient } from "@repo/types";
 
 interface QuickAddPatientModalProps {
@@ -76,42 +67,34 @@ export function QuickAddPatientModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tambah Pasien Baru</DialogTitle>
-          <DialogDescription>
-            Tambahkan pasien baru dengan cepat
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient_name">Nama</Label>
-            <Input
-              id="patient_name"
-              placeholder="Nama pasien"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="patient_wa">Nomor WhatsApp</Label>
-            <Input
-              id="patient_wa"
-              placeholder="08123456789"
-              value={whatsappNumber}
-              onChange={(e) => setWhatsappNumber(e.target.value)}
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Menyimpan..." : "Simpan"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <BottomSheet open={open} onClose={() => onOpenChange(false)} title="Tambah Pasien Baru">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fg">
+          <label className="fl">Nama</label>
+          <Input
+            id="patient_name"
+            placeholder="Nama pasien"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="fi"
+          />
+        </div>
+        <div className="fg">
+          <label className="fl">Nomor WhatsApp</label>
+          <Input
+            id="patient_wa"
+            placeholder="08123456789"
+            value={whatsappNumber}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
+            required
+            className="fi"
+          />
+        </div>
+        <button type="submit" className="bp" disabled={loading}>
+          {loading ? "Menyimpan..." : "Simpan"}
+        </button>
+      </form>
+    </BottomSheet>
   );
 }

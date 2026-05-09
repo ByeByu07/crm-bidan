@@ -7,7 +7,6 @@ import { usePatients } from "@/hooks/use-patients";
 import { useConditions } from "@/hooks/use-conditions";
 import { useCreateTransaction } from "@/hooks/use-create-transaction";
 import { useSetOutcome } from "@/hooks/use-set-outcome";
-import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { toast } from "sonner";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
@@ -56,16 +55,15 @@ export default function NewTransactionPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Transaksi Baru</h1>
-        <AvatarButton />
-      </div>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <h1 className="t">Transaksi Baru</h1>
+      </header>
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-10" />
-          <Skeleton className="h-10" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-10" />
+          <Skeleton className="h-10 rounded-[10px]" />
+          <Skeleton className="h-10 rounded-[10px]" />
+          <Skeleton className="h-32 rounded-[14px]" />
+          <Skeleton className="h-10 rounded-[10px]" />
         </div>
       ) : (
         <TransactionForm

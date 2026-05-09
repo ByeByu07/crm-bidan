@@ -1,6 +1,4 @@
 import { cn } from "@repo/ui/lib/utils";
-import { Card, CardContent } from "@repo/ui/components/card";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface MetricCardProps {
   title: string;
@@ -8,35 +6,41 @@ interface MetricCardProps {
   change?: number | null;
 }
 
+function IUp() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
+function IDown() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+      <polyline points="17 18 23 18 23 12" />
+    </svg>
+  );
+}
+
 export function MetricCard({ title, value, change }: MetricCardProps) {
   const isPositive = change && change >= 0;
   const isNegative = change && change < 0;
 
   return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{title}</p>
-          {change !== null && change !== undefined && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                isPositive && "bg-emerald-500/10 text-emerald-600",
-                isNegative && "bg-rose-500/10 text-rose-600"
-              )}
-            >
-              {isPositive ? (
-                <ArrowUpRight className="size-2.5" />
-              ) : (
-                <ArrowDownRight className="size-2.5" />
-              )}
-              {isPositive ? "+" : ""}
-              {change}%
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-lg font-bold">{value}</p>
-      </CardContent>
-    </Card>
+    <div className="kc card">
+      <div className="kh">
+        <span className="kl">{title}</span>
+        {change !== null && change !== undefined && (
+          <span className={cn("kb", isPositive ? "up" : "down")}>
+            {isPositive ? <IUp /> : <IDown />}
+            {isPositive ? "+" : ""}
+            {change}%
+          </span>
+        )}
+      </div>
+      <div className="kv">{value}</div>
+    </div>
   );
 }

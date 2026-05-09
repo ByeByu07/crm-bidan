@@ -5,7 +5,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -21,24 +20,21 @@ export function SalesChart({ data }: SalesChartProps) {
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="label"
             tickFormatter={(value: string) => {
               const parts = value.split("-");
               if (parts.length === 3) {
-                // Daily format: "2025-05-06" → "6 Mei"
                 const day = Number(parts[2]);
                 const monthNames = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
                 const monthIdx = Number(parts[1]) - 1;
                 return `${day} ${monthNames[monthIdx] ?? ""}`;
               }
-              // Monthly format: "2025-05" → "05/25"
               const year = parts[0] ?? "";
               const month = parts[1] ?? "";
               return `${month}/${year.slice(2)}`;
             }}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "#7a6e63" }}
             axisLine={false}
             tickLine={false}
           />
@@ -50,7 +46,7 @@ export function SalesChart({ data }: SalesChartProps) {
                 ? `${(value / 1_000).toFixed(0)}rb`
                 : value.toString()
             }
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "#7a6e63" }}
             axisLine={false}
             tickLine={false}
             width={50}
@@ -70,14 +66,17 @@ export function SalesChart({ data }: SalesChartProps) {
               return `${month}/${year}`;
             }}
             contentStyle={{
-              borderRadius: "0.5rem",
-              border: "1px solid hsl(var(--border))",
-              background: "hsl(var(--background))",
+              borderRadius: "10px",
+              border: "1px solid #e8e0d8",
+              background: "#ffffff",
+              fontFamily: "var(--font-sans), sans-serif",
+              fontSize: "13px",
+              color: "#2a2118",
             }}
           />
           <Bar
             dataKey="revenue"
-            fill="var(--primary)"
+            fill="#2a2118"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

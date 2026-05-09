@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
 import { Textarea } from "@repo/ui/components/textarea";
 import {
   Select,
@@ -12,16 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/select";
-import { Card, CardContent } from "@repo/ui/components/card";
 import { PatientCombobox } from "./PatientCombobox";
 import { DrugCombobox } from "./DrugCombobox";
 import { QuickAddPatientModal } from "./QuickAddPatientModal";
 import { QuickAddConditionModal } from "./QuickAddConditionModal";
 import { CurrencyInput } from "./CurrencyInput";
+import { Stepper } from "@/components/design-system/Stepper";
 import type { Drug, Patient, Condition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
-import { Plus, Minus, Trash2, CalendarIcon } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 import { Calendar } from "@repo/ui/components/calendar";
 import {
   Popover,
@@ -54,6 +52,15 @@ interface TransactionFormProps {
     }>;
   }) => void;
   isSubmitting: boolean;
+}
+
+function IPlus() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
 }
 
 export function TransactionForm({
@@ -135,8 +142,8 @@ export function TransactionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Pasien</Label>
+      <div className="fg">
+        <label className="fl">Pasien</label>
         <div className="flex gap-2">
           <div className="flex-1">
             <PatientCombobox
@@ -145,26 +152,23 @@ export function TransactionForm({
               onSelect={setSelectedPatient}
             />
           </div>
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="icon"
+            className="cl"
+            style={{ width: "44px", height: "44px" }}
             onClick={() => setShowAddPatient(true)}
           >
-            <Plus className="size-4" />
-          </Button>
+            <IPlus />
+          </button>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Kondisi Pasien</Label>
+      <div className="fg">
+        <label className="fl">Kondisi Pasien</label>
         <div className="flex gap-2">
           <div className="flex-1">
-            <Select
-              value={condition}
-              onValueChange={(v) => setCondition(v)}
-            >
-              <SelectTrigger>
+            <Select value={condition} onValueChange={(v) => setCondition(v)}>
+              <SelectTrigger className="fi" style={{ height: "44px" }}>
                 <SelectValue placeholder="Pilih kondisi..." />
               </SelectTrigger>
               <SelectContent>
@@ -176,37 +180,36 @@ export function TransactionForm({
               </SelectContent>
             </Select>
           </div>
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="icon"
+            className="cl"
+            style={{ width: "44px", height: "44px" }}
             onClick={() => setShowAddCondition(true)}
           >
-            <Plus className="size-4" />
-          </Button>
+            <IPlus />
+          </button>
         </div>
         {conditions.length === 0 && (
-          <p className="text-xs text-muted-foreground">
-            Belum ada kondisi. Klik + untuk menambahkan.
-          </p>
+          <p className="c">Belum ada kondisi. Klik + untuk menambahkan.</p>
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label>Tanggal Pembelian</Label>
+      <div className="fg">
+        <label className="fl">Tanggal Pembelian</label>
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
+            <button
+              type="button"
+              className="fi"
+              style={{ display: "flex", alignItems: "center", gap: "8px", textAlign: "left" }}
             >
-              <CalendarIcon className="mr-2 size-4" />
+              <CalendarIcon className="size-4" />
               {purchaseDate ? (
                 formatDate(purchaseDate, "dd MMM yyyy")
               ) : (
-                <span>Pilih tanggal</span>
+                <span style={{ color: "var(--bidan-muted)" }}>Pilih tanggal</span>
               )}
-            </Button>
+            </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
@@ -217,7 +220,6 @@ export function TransactionForm({
                   setPurchaseDate("");
                   return;
                 }
-                // Use local date parts to avoid timezone offset issues
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, "0");
                 const day = String(date.getDate()).padStart(2, "0");
@@ -229,137 +231,101 @@ export function TransactionForm({
         </Popover>
       </div>
 
-      <div className="space-y-3">
-        <Label>Item Obat</Label>
+      <div style={{ marginBottom: "16px" }}>
+        <label className="fl">Item Obat</label>
         {items.map((item, idx) => (
-          <Card key={item.id}>
-            <CardContent className="space-y-3 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Item {idx + 1}</span>
-                {items.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                )}
-              </div>
+          <div key={item.id} className="card" style={{ padding: "12px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+              <span className="c">Item {idx + 1}</span>
+              {items.length > 1 && (
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#c62828", padding: 0 }}
+                  onClick={() => removeItem(item.id)}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              )}
+            </div>
+            <div className="fg">
               <DrugCombobox
                 drugs={drugs}
                 selected={item.drug}
                 onSelect={(drug) => updateItem(item.id, { drug })}
               />
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Jumlah</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      inputMode="numeric"
-                      className="flex-1"
-                      value={item.quantityDispense}
-                      onFocus={(e) => e.target.select()}
-                      onChange={(e) =>
-                        updateItem(item.id, {
-                          quantityDispense: parseInt(e.target.value) || 0,
-                        })
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      disabled={item.quantityDispense <= 1}
-                      onClick={() =>
-                        updateItem(item.id, {
-                          quantityDispense: Math.max(1, item.quantityDispense - 1),
-                        })
-                      }
-                    >
-                      <Minus className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() =>
-                        updateItem(item.id, {
-                          quantityDispense: item.quantityDispense + 1,
-                        })
-                      }
-                    >
-                      <Plus className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Harga Satuan</Label>
-                  <CurrencyInput
-                    value={item.pricePerDispense}
-                    onChange={(v) =>
-                      updateItem(item.id, {
-                        pricePerDispense: v,
-                      })
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              {item.drug && (
-                <div className="text-xs text-muted-foreground">
-                  Estimasi habis:{" "}
-                  {calculateDurationDays(
-                    item.quantityDispense,
-                    item.drug.durationPerDispenseUnit
-                  )}{" "}
-                  hari
-                </div>
-              )}
-              <div className="text-right text-sm font-semibold">
-                Subtotal: {formatCurrency(calculateSubtotal(item.quantityDispense, item.pricePerDispense))}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="fg">
+              <label className="fl">Harga Satuan</label>
+              <CurrencyInput
+                value={item.pricePerDispense}
+                onChange={(v) => updateItem(item.id, { pricePerDispense: v })}
+                placeholder="0"
+              />
+            </div>
+            <div className="fg">
+              <label className="fl">Jumlah</label>
+              <Stepper
+                value={item.quantityDispense}
+                onChange={(v) => updateItem(item.id, { quantityDispense: v })}
+                min={1}
+              />
+            </div>
+            {item.drug && (
+              <p className="c">
+                Estimasi habis:{" "}
+                {calculateDurationDays(
+                  item.quantityDispense,
+                  item.drug.durationPerDispenseUnit
+                )}{" "}
+                hari
+              </p>
+            )}
+            <p className="c" style={{ textAlign: "right", marginTop: "8px" }}>
+              Subtotal: {formatCurrency(calculateSubtotal(item.quantityDispense, item.pricePerDispense))}
+            </p>
+          </div>
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={addItem}
-        >
-          <Plus className="mr-2 size-4" />
-          Tambah Item Obat
-        </Button>
+        <button type="button" className="btn-add-item" onClick={addItem}>
+          <IPlus /> Tambah Item Obat
+        </button>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Catatan</Label>
+      <div className="fg">
+        <label className="fl">Catatan</label>
         <Textarea
           id="notes"
           placeholder="Catatan tambahan..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          className="fi"
+          rows={3}
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border p-4">
-        <span className="font-semibold">Total</span>
-        <span className="text-lg font-bold">{formatCurrency(totalPrice)}</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px",
+          border: "1px solid var(--bidan-border)",
+          borderRadius: "10px",
+          marginBottom: "16px",
+        }}
+      >
+        <span className="h">Total</span>
+        <span className="d" style={{ fontSize: "18px" }}>
+          {formatCurrency(totalPrice)}
+        </span>
       </div>
 
-      <Button
+      <button
         type="submit"
-        className="w-full"
+        className="bp"
         disabled={isSubmitting || !selectedPatient || !condition || items.some((i) => !i.drug)}
       >
         {isSubmitting ? "Menyimpan..." : "Simpan Transaksi"}
-      </Button>
+      </button>
 
       <QuickAddPatientModal
         open={showAddPatient}

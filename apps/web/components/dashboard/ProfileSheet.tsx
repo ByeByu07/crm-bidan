@@ -3,15 +3,48 @@
 import { useProfile } from "@/hooks/use-profile";
 import { useOrganization } from "@/hooks/use-organization";
 import { authClient } from "@repo/auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
-import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { ArrowLeft, LogOut, Building2, Mail } from "lucide-react";
-import { cn } from "@repo/ui/lib/utils";
 
 interface ProfileSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function IBack() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function IBuilding() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21h18" />
+      <path d="M5 21V7l8-4 8 4v14" />
+      <path d="M9 21v-6h6v6" />
+    </svg>
+  );
+}
+
+function IMail() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  );
+}
+
+function ILogout() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
 }
 
 export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
@@ -24,44 +57,19 @@ export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
   }
 
   const isLoading = profileLoading || orgLoading;
-
-  const avatarSrc = organization?.logo || profile?.image || null;
   const initials = (organization?.name?.[0] || profile?.name?.[0] || "U").toUpperCase();
 
   return (
     <>
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-black/50 transition-opacity duration-200",
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        )}
-        onClick={() => onOpenChange(false)}
-      />
-
-      <div
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-50 bg-background transition-transform duration-200 ease-out",
-          "rounded-t-2xl shadow-xl",
-          "flex flex-col",
-          open ? "translate-y-0" : "translate-y-full"
-        )}
-        style={{ height: "100dvh" }}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            className="shrink-0 -ml-2"
-          >
-            <ArrowLeft className="size-5" />
-          </Button>
-          <h2 className="text-base font-semibold">Profil</h2>
+      <div className={`pso ${open ? "open" : ""}`} onClick={() => onOpenChange(false)} />
+      <div className={`ps ${open ? "open" : ""}`}>
+        <div className="psh">
+          <button className="cl" onClick={() => onOpenChange(false)}>
+            <IBack />
+          </button>
+          <h2 className="h" style={{ fontSize: "16px" }}>Profil</h2>
         </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="psc">
           {isLoading ? (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
@@ -75,40 +83,29 @@ export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
             </div>
           ) : (
             <div className="space-y-5">
-              {/* User Info */}
               <div className="flex items-center gap-3">
-                <Avatar className="size-12">
-                  <AvatarImage src={avatarSrc || undefined} />
-                  <AvatarFallback className="text-base bg-primary/10 text-primary font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{profile?.name}</p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Mail className="size-3 shrink-0" />
-                    <span className="truncate">{profile?.email}</span>
-                  </div>
+                <div className="av" style={{ width: "48px", height: "48px", fontSize: "18px" }}>
+                  {initials}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 600, fontSize: "14px" }}>{profile?.name}</p>
+                  <p className="c" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <IMail /> {profile?.email}
+                  </p>
                 </div>
               </div>
 
-              {/* Organization Info */}
-              <div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                  <Building2 className="size-3.5" />
-                  <span>Informasi Klinik</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{organization?.name || "-"}</p>
-                  <p className="text-xs text-muted-foreground">@{organization?.slug || "-"}</p>
-                </div>
+              <div style={{ marginBottom: "20px" }}>
+                <p className="c" style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "8px" }}>
+                  <IBuilding /> Informasi Klinik
+                </p>
+                <p className="h" style={{ fontSize: "14px" }}>{organization?.name || "-"}</p>
+                <p className="c">@{organization?.slug || "-"}</p>
               </div>
 
-              {/* Logout */}
-              <Button variant="outline" className="w-full text-destructive hover:text-destructive hover:bg-destructive/5" onClick={handleLogout}>
-                <LogOut className="mr-2 size-4" />
-                Keluar
-              </Button>
+              <button className="bg" style={{ color: "#c62828" }} onClick={handleLogout}>
+                <ILogout /> Keluar
+              </button>
             </div>
           )}
         </div>

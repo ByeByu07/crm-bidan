@@ -2,18 +2,9 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/components/dialog";
-import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
 import { toast } from "sonner";
+import { BottomSheet } from "@/components/design-system/BottomSheet";
 import type { DrugCategoryItem } from "@repo/types";
 
 interface QuickAddDrugCategoryModalProps {
@@ -74,32 +65,23 @@ export function QuickAddDrugCategoryModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tambah Kategori Obat Baru</DialogTitle>
-          <DialogDescription>
-            Tambahkan kategori obat yang dapat dipilih saat menambahkan obat
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="category_name">Nama Kategori</Label>
-            <Input
-              id="category_name"
-              placeholder="Contoh: Vitamin, Antibiotik, dll"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Menyimpan..." : "Simpan"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <BottomSheet open={open} onClose={() => onOpenChange(false)} title="Tambah Kategori Obat Baru">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fg">
+          <label className="fl">Nama Kategori</label>
+          <Input
+            id="category_name"
+            placeholder="Contoh: Vitamin, Antibiotik, dll"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="fi"
+          />
+        </div>
+        <button type="submit" className="bp" disabled={loading}>
+          {loading ? "Menyimpan..." : "Simpan"}
+        </button>
+      </form>
+    </BottomSheet>
   );
 }

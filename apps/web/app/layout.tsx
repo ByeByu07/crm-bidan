@@ -1,26 +1,24 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Montserrat, Playfair_Display, Source_Code_Pro } from "next/font/google";
+import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
+import "./design-system.css";
 import "@repo/ui/globals.css";
 import "streamdown/styles.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@repo/ui/components/sonner";
 
-const fontSans = Montserrat({
+const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
 });
 
-const fontSerif = Playfair_Display({
+const fontSerif = Newsreader({
   subsets: ["latin"],
   variable: "--font-serif",
-});
-
-const fontMono = Source_Code_Pro({
-  subsets: ["latin"],
-  variable: "--font-mono",
+  display: "swap",
+  style: ["normal", "italic"],
 });
 
 
@@ -36,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${fontSans.variable} ${fontSerif.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
             {children}
