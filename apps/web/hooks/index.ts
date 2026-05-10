@@ -1,7 +1,9 @@
 export { useSales } from "./use-sales";
 export { useNotifications } from "./use-notifications";
-export { useDrugs } from "./use-drugs";
+export { useCatalogItems } from "./use-catalog-items";
+export { useCategories } from "./use-categories";
 export { usePatients } from "./use-patients";
 export { useCreateTransaction } from "./use-create-transaction";
 export { useSendNotification } from "./use-send-notification";
 export { useSetOutcome } from "./use-set-outcome";
+export { useRescheduleNotification } from "./use-reschedule-notification";

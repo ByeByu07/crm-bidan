@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@repo/db";
-import { notificationLog, patient } from "@repo/db/schema";
+import { notificationLog, patient, saleItem, catalogItem } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and, or, gte, isNull } from "drizzle-orm";
 import type { NotificationQueue, NotificationLogItem } from "@repo/types";
@@ -15,15 +15,13 @@ export async function GET() {
   const today = startOfToday();
   const weekEnd = addDays(today, 7);
 
-  // Fetch only notification logs we actually need:
-  // - All pending (for scheduled list + counts)
-  // - All sent without outcome (for sentPending list)
-  // - All sent today (for completedToday list)
-  // Join patients in the same query to avoid N+1 / memory bloat.
+  // Fetch notification logs with patient and catalog item info
   const rows = await db
     .select()
     .from(notificationLog)
     .leftJoin(patient, eq(notificationLog.patientId, patient.id))
+    .leftJoin(saleItem, eq(notificationLog.saleItemId, saleItem.id))
+    .leftJoin(catalogItem, eq(saleItem.catalogItemId, catalogItem.id))
     .where(
       and(
         eq(notificationLog.organizationId, orgId),
@@ -39,6 +37,8 @@ export async function GET() {
     ...r.notification_log,
     patientName: r.patient?.name ?? "",
     whatsappNumber: r.patient?.whatsappNumber ?? "",
+    catalogItemName: r.catalog_item?.name ?? "",
+    catalogItemDurationDays: r.catalog_item?.durationDays ?? 14,
   } as NotificationLogItem));
 
   const todayCount = enriched.filter((l) => {

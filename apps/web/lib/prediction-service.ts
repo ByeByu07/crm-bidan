@@ -8,7 +8,7 @@ export const ruleBasedPredictor: PredictionService = {
     let score = 0.5;
 
     // If days since last buy is close to expected duration, more likely to buy
-    const ratio = features.daysSinceLastBuy / features.drugDurationDays;
+    const ratio = features.daysSinceLastBuy / features.catalogItemDurationDays;
     if (ratio >= 0.8 && ratio <= 1.2) {
       score += 0.2;
     } else if (ratio > 1.5) {

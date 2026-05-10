@@ -1,6 +1,6 @@
 export function buildWaMessage(
   patientName: string,
-  drugName: string,
+  itemName: string,
   nextExpectedBuy: Date | string,
 ): string {
   const dateStr =
@@ -12,5 +12,5 @@ export function buildWaMessage(
           year: "numeric",
         });
 
-  return `Halo ${patientName}, ini pengingat dari klinik. Obat ${drugName} Anda diperkirakan habis sekitar tanggal ${dateStr}. Jika perlu pembelian ulang, silakan balas pesan ini atau datang ke klinik. Terima kasih!`;
+  return `Halo ${patientName}, ini pengingat dari klinik untuk ${itemName} Anda. Jadwal follow-up pada tanggal ${dateStr}. Silakan balas atau datang ke klinik. Terima kasih!`;
 }

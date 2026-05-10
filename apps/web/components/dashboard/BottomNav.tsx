@@ -38,8 +38,8 @@ const tabs = [
     ),
   },
   {
-    label: "Obat",
-    href: "/drugs",
+    label: "Katalog",
+    href: "/catalog",
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 0 0 0 7 4.95 4.95 0 0 0 7 0z" />

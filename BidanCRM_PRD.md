@@ -8,13 +8,15 @@ Product Requirements Document
 
 **1. Product Overview**
 
-BidanCRM is a mobile-first web application for Indonesian midwives (bidan) and nurses to manage patient purchase history, automate drug restocking notifications via WhatsApp, and collect behavioral data that will power an XGBoost-based purchase prediction model in future iterations.
+BidanCRM is a mobile-first web application for Indonesian midwives (bidan) and nurses to manage patient purchase history, automate restocking and follow-up notifications via WhatsApp, and collect behavioral data that will power an XGBoost-based purchase prediction model in future iterations.
+
+The system supports both **products** (drugs, supplements, vitamins) and **services** (checkups, treatments, injections) through a unified catalog model.
 
 The system is designed with a clear separation between MVP functionality (rule-based) and future ML/WA integration (model-based), ensuring the codebase is plug-and-play for both upgrades.
 
 **1.1 Problem Statement**
 
-- Bidans manually track when patients need to restock drugs --- leading to missed follow-ups and lost revenue.
+- Bidans manually track when patients need to restock products or return for services --- leading to missed follow-ups and lost revenue.
 
 - No structured system exists to record patient purchase history in a small klinik context.
 
@@ -24,7 +26,9 @@ The system is designed with a clear separation between MVP functionality (rule-b
 
 - A 5-page mobile-first dashboard (4 core pages + profile) with bottom navigation.
 
-- Rule-based WhatsApp notification trigger (day drug runs out).
+- Rule-based WhatsApp notification trigger (day product runs out or service follow-up is due).
+
+- Unified catalog supporting both products and services with flexible follow-up scheduling.
 
 - Data collection layer that passively builds training data for XGBoost in 6-12 months.
 
@@ -115,7 +119,7 @@ Better-auth with:
 
 4.  User is set as owner of the organization.
 
-5.  All subsequent data (patients, drugs, transactions) is scoped to organization_id.
+5.  All subsequent data (patients, catalog items, transactions) is scoped to organization_id.
 
 6.  Verification email is sent via Resend. User must verify before accessing dashboard.
 
@@ -163,33 +167,45 @@ Tracks condition changes over time. No separate page --- written automatically o
 
 *Logic: on transaction save, check if selected condition differs from the last active patient_condition row. If different → set end_date on old row, insert new row. If same → do nothing.*
 
-**4.2.3 drug**
+**4.2.3 catalog_item**
 
-Two-level unit system: bidan buys in package_unit (e.g. box), sells in dispense_unit (e.g. tablet).
+Unified catalog supporting both products and services. Single unit system with duration-based follow-up.
 
-| **Column**                 | **Type**      | **Notes**                                                     |
-|----------------------------|---------------|---------------------------------------------------------------|
-| id                         | uuid PK       |                                                               |
-| organization_id            | text FK       | Scoped per bidan                                              |
-| name                       | varchar(255)  | e.g. Vitamin D, Folic Acid                                    |
-| category                   | enum          | vitamin \| suplemen \| KB \| obat \| lainnya                  |
-| dispense_unit              | enum          | tablet \| kapsul \| botol \| ampul \| strip \| sachet \| tube |
-| package_unit               | enum          | box \| strip \| botol \| blister \| dus                       |
-| units_per_package          | integer       | e.g. 30 tablets per box                                       |
-| duration_per_dispense_unit | integer       | Days of supply per 1 dispense unit. e.g. 1 tablet = 1 day     |
-| sell_price_per_dispense    | decimal(12,2) | Price charged to patient per tablet/botol/etc                 |
-| buy_price_per_package      | decimal(12,2) | Cost to bidan per box/strip/etc (for margin calc)             |
-| is_active                  | boolean       | default true --- soft delete                                  |
-| notes                      | text          | Optional extra info                                           |
-| created_at                 | timestamp     | default now()                                                 |
+| **Column**      | **Type**      | **Notes**                                                     |
+|-----------------|---------------|---------------------------------------------------------------|
+| id              | uuid PK       |                                                               |
+| organization_id | text FK       | Scoped per bidan                                              |
+| name            | varchar(255)  | e.g. Vitamin D, Pemeriksaan Kehamilan, Suntik KB              |
+| type            | enum          | product \| service                                            |
+| category        | text          | e.g. Vitamin, Obat, Layanan, Paket                            |
+| unit            | text          | e.g. tablet, botol, sesi, kali                                |
+| sell_price      | decimal(12,2) | Price charged to patient per unit                             |
+| cost_price      | decimal(12,2) | Cost to bidan (nullable, for margin tracking)                 |
+| duration_days   | integer       | Days until next follow-up per 1 unit                          |
+| is_active       | boolean       | default true --- soft delete                                  |
+| notes           | text          | Optional extra info                                           |
+| created_at      | timestamp     | default now()                                                 |
 
 *Derived formula (computed at transaction save):*
 
-> duration_days = quantity_dispense × duration_per_dispense_unit
+> duration_days = quantity_dispense × catalog_item.duration_days
 >
 > next_expected_buy = purchase_date + duration_days
 
-**4.2.4 transaction**
+*Quantity lock: when type = "service", quantity_dispense is always 1.*
+
+**4.2.4 category**
+
+Custom categories per organization for grouping catalog items.
+
+| **Column**      | **Type**  | **Notes**            |
+|-----------------|-----------|----------------------|
+| id              | uuid PK   |                      |
+| organization_id | text FK   | Scoped per bidan     |
+| name            | text      | e.g. Vitamin, Layanan|
+| created_at      | timestamp | default now()        |
+
+**4.2.5 transaction**
 
 One row per patient visit. The receipt header.
 
@@ -204,24 +220,24 @@ One row per patient visit. The receipt header.
 | notes             | text          | Optional bidan note                                                  |
 | created_at        | timestamp     |                                                                      |
 
-**4.2.5 sale_item**
+**4.2.6 sale_item**
 
-One row per drug per transaction. Drives the entire notification engine.
+One row per catalog item per transaction. Drives the entire notification engine.
 
 | **Column**         | **Type**      | **Notes**                                             |
 |--------------------|---------------|-------------------------------------------------------|
 | id                 | uuid PK       |                                                       |
 | transaction_id     | uuid FK       | → transaction.id                                      |
-| drug_id            | uuid FK       | → drug.id                                             |
-| quantity_dispense  | integer       | Units sold to patient (e.g. 30 tablets)               |
+| catalog_item_id    | uuid FK       | → catalog_item.id                                     |
+| quantity_dispense  | integer       | Units sold (e.g. 30 tablets, or 1 for services)       |
 | price_per_dispense | decimal(12,2) | Snapshot of sell price at time of sale                |
 | subtotal           | decimal(12,2) | Auto: quantity_dispense × price_per_dispense          |
-| duration_days      | integer       | Auto: quantity_dispense × duration_per_dispense_unit  |
+| duration_days      | integer       | Auto: quantity_dispense × catalog_item.duration_days  |
 | next_expected_buy  | date          | Auto: purchase_date + duration_days                   |
-| actual_next_buy    | date          | Filled when patient buys same drug again              |
+| actual_next_buy    | date          | Filled when patient buys same item again              |
 | consumption_rate   | decimal(5,2)  | Auto: actual_days / duration_days --- XGBoost feature |
 
-**4.2.6 notification_log**
+**4.2.7 notification_log**
 
 One row per sale_item per notification cycle. Becomes XGBoost training data.
 
@@ -249,7 +265,7 @@ The app uses a persistent bottom navigation bar (5 items) rendered inside a shar
 | 1       | BarChart2 | /dashboard/sales            | Penjualan  |
 | 2       | Receipt   | /dashboard/transactions/new | Transaksi  |
 | 3       | Bell      | /dashboard/notifications    | Notifikasi |
-| 4       | Pill      | /dashboard/drugs            | Obat       |
+| 4       | Pill      | /dashboard/catalog          | Katalog    |
 | 5       | User      | /dashboard/profile          | Profil     |
 
 Active tab is highlighted using the Midnight Bloom theme accent color. Navigation state is driven by Next.js usePathname().
@@ -258,7 +274,7 @@ Active tab is highlighted using the Midnight Bloom theme accent color. Navigatio
 
 **Purpose**
 
-Give bidan a monthly overview of revenue, transactions, and top-selling drugs with month-over-month comparison.
+Give bidan a monthly overview of revenue, transactions, and top-selling items with month-over-month comparison.
 
 **Components**
 
@@ -268,7 +284,7 @@ Give bidan a monthly overview of revenue, transactions, and top-selling drugs wi
 
 - Bar chart: Monthly revenue for the selected period with % change annotation per bar
 
-- Top products list: Drug name + revenue contribution + units sold
+- Top products list: Item name + revenue contribution + units sold
 
 **Data & Queries**
 
@@ -295,36 +311,38 @@ Primary data entry page. Bidan records every patient purchase here. All downstre
 | Patient      | Search by name or WA number --- combobox with autocomplete. If not found, inline \"Tambah Pasien Baru\" quick-create modal (name + WA required)     | Required       |
 | Condition    | Select: Ibu hamil \| Ibu menyusui \| Umum \| Lainnya. Pre-filled from last known condition                                                          | Required       |
 | Tanggal Beli | Date picker --- default today, can backdate                                                                                                         | Required       |
-| Obat dibeli  | Drug multi-select via combobox. Each selected drug shows: qty input, price (auto from catalog), duration (auto), next_expected_buy (auto-displayed) | Min 1 drug     |
+| Item dibeli  | Catalog item multi-select via combobox. Each selected item shows: qty input, price (auto from catalog), duration (auto), next_expected_buy (auto)   | Min 1 item     |
 | Catatan      | Optional free text note                                                                                                                             | Optional       |
 
 **Auto-Calculations (client-side, real-time)**
 
-- subtotal per drug = quantity × sell_price_per_dispense
+- subtotal per item = quantity × sell_price
 
-- duration_days = quantity × duration_per_dispense_unit
+- duration_days = quantity × catalog_item.duration_days
 
-- next_expected_buy = purchase_date + duration_days (displayed below each drug line)
+- next_expected_buy = purchase_date + duration_days (displayed below each item line)
 
 - total_price = sum of all subtotals
 
+- **Quantity lock:** when selected item type = "service", quantity is locked to 1
+
 **On Save --- Server Actions**
 
-7.  Validate all fields.
+1. Validate all fields.
 
-8.  INSERT into transaction table.
+2. INSERT into transaction table.
 
-9.  For each drug: INSERT into sale_item with all auto-calculated fields.
+3. For each item: INSERT into sale_item with all auto-calculated fields.
 
-10. For each sale_item: INSERT into notification_log (status: scheduled, scheduled_date: next_expected_buy, wa_message: pre-built string).
+4. For each sale_item: INSERT into notification_log (status: scheduled, scheduled_date: next_expected_buy, wa_message: pre-built string).
 
-11. Check patient_condition: if condition changed vs last active → close old row (set end_date), insert new row.
+5. Check patient_condition: if condition changed vs last active → close old row (set end_date), insert new row.
 
-12. For all previous sale_items of same patient+drug with actual_next_buy IS NULL: set actual_next_buy = today, calculate consumption_rate.
+6. For all previous sale_items of same patient+catalog_item with actual_next_buy IS NULL: set actual_next_buy = today, calculate consumption_rate.
 
-13. Invalidate TanStack Query caches for sales, notifications.
+7. Invalidate TanStack Query caches for sales, notifications.
 
-14. Redirect to /dashboard/transactions/new with success toast.
+8. Redirect to /dashboard/transactions/new with success toast.
 
 **Quick-Add Patient Modal**
 
@@ -334,25 +352,23 @@ If patient not found in search, bidan can fill a minimal form inline: name + Wha
 
 **Purpose**
 
-Show bidan which patients need to be contacted today, who is overdue, and collect outcome feedback. This page is the core of the notification feedback loop and XGBoost data collection.
+Show bidan which patients need to be contacted today, who is overdue, and collect outcome feedback. Includes a follow-up rescheduling engine for declined or unanswered notifications.
 
 **Sections**
 
 - Summary bar: 3 metric pills --- Hari ini (count), Terlambat (count, red), Minggu ini (count)
 
-- Belum dikirim list --- patients where scheduled_date \<= today AND status = scheduled
+- Belum dikirim list --- patients where scheduled_date <= today AND status = scheduled
 
 - Sudah dikirim --- outcome pending list (status = sent, outcome IS NULL)
-
-- Selesai hari ini --- completed (outcome filled)
 
 **Notification Card --- State Machine**
 
 Each card moves through states:
 
-> scheduled → \[Kirim WA clicked\] → sent → \[outcome selected\] → done
+> scheduled → [Kirim WA clicked] → sent → [outcome selected] → done
 
-**\"Kirim WA\" Button --- MVP Behavior**
+**"Kirim WA" Button --- MVP Behavior**
 
 Opens wa.me deep link in new tab with pre-filled message (from notification_log.wa_message). Simultaneously, a server action updates notification_log: status = sent, sent_at = now(). Patient receives the message via standard WhatsApp.
 
@@ -362,17 +378,47 @@ Opens wa.me deep link in new tab with pre-filled message (from notification_log.
 
 After clicking Kirim WA, the card expands to show 3 outcome buttons:
 
-| **Button**    | **Label**     | **DB Update**         | **Note**                                                              |
-|---------------|---------------|-----------------------|-----------------------------------------------------------------------|
-| Pasien beli   | Pasien beli   | outcome = bought      | Shortcut --- system also auto-sets this when new transaction recorded |
-| Tidak beli    | Tidak beli    | outcome = ignored     | Patient declined or not interested                                    |
-| Tidak respons | Tidak respons | outcome = no_response | Re-schedules a follow-up notification for +1 day                      |
+| **Button**      | **Label**        | **Action**                                                                                                                          |
+|-----------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| Pasien beli     | Pasien beli      | Routes to /transactions/new with patient pre-filled. Outcome = bought. New transaction auto-creates next notification.              |
+| Tidak beli      | Tidak jadi beli  | Opens follow-up bottom sheet with quick-pick chips (+3, +5, +7 days). User picks date or taps "Hentikan Follow-Up" to close forever.|
+| Tidak respons   | Tidak dihubungi  | Same bottom sheet as "Tidak beli". Quick-pick chips + custom date + "Hentikan Follow-Up".                                            |
 
-*Auto-bought detection: when bidan records a new transaction, the system looks for any pending notification_log rows for that patient+drug and auto-sets outcome = bought without requiring manual click.*
+**Follow-Up Bottom Sheet**
+
+Appears when "Tidak beli" or "Tidak respons" is clicked:
+
+```
+┌──────────────────────────────────────────┐
+│  Jadwal Ulang Follow-Up                  │
+│                                          │
+│  Budi — Pemeriksaan Kehamilan            │
+│                                          │
+│  ┌──────┬──────┬──────┐                 │
+│  │+3 hr │+5 hr │+7 hr │                 │
+│  └──────┴──────┴──────┘                 │
+│                                          │
+│  [Pilih Tanggal Lain]                    │
+│                                          │
+│  ─────────────────────────────────────   │
+│                                          │
+│  [Hentikan Follow-Up]  (destructive)     │
+│     Tidak ada pengingat lagi             │
+└──────────────────────────────────────────┘
+```
+
+**Max Reschedule Days:**
+```
+maxDays = max(14, catalogItem.durationDays)
+```
+
+**Quick-pick chips:** +3, +5, +7 days. Chips exceeding maxDays are hidden. Custom date picker capped at maxDays.
+
+**"Hentikan Follow-Up":** Sets outcome (ignored or no_response) and does NOT create a new notification_log. The notification is permanently closed.
 
 **Rule-Based Trigger Query**
 
-> SELECT nl.\*, p.name, p.whatsapp_number, d.name as drug_name
+> SELECT nl.\*, p.name, p.whatsapp_number, ci.name as item_name
 >
 > FROM notification_log nl
 >
@@ -382,52 +428,52 @@ After clicking Kirim WA, the card expands to show 3 outcome buttons:
 >
 > JOIN transaction t ON t.id = si.transaction_id
 >
-> JOIN drug d ON d.id = si.drug_id
+> JOIN catalog_item ci ON ci.id = si.catalog_item_id
 >
 > WHERE nl.organization_id = :org_id
 >
-> AND nl.scheduled_date \<= CURRENT_DATE
+> AND nl.scheduled_date <= CURRENT_DATE
 >
-> AND nl.status = \'scheduled\'
+> AND nl.status = 'scheduled'
 >
 > AND si.actual_next_buy IS NULL
 >
 > ORDER BY nl.scheduled_date ASC
 
-**5.5 Page 4 --- Drug Catalog (/dashboard/drugs)**
+**5.5 Page 4 --- Catalog (/dashboard/catalog)**
 
 **Purpose**
 
-Bidan manages their drug product catalog. Each drug entry drives pricing, duration calculation, and notification scheduling across the entire app.
+Bidan manages their unified product and service catalog. Each entry drives pricing, duration calculation, and notification scheduling across the entire app.
 
 **List View**
 
 - Search input --- filter by name or category
 
-- Filter chips --- All \| Vitamin \| Suplemen \| KB \| Obat \| Lainnya
+- Filter chips --- Semua \| Produk \| Layanan \| [categories]
 
-- Drug card per item showing: name, category badge, dispense_unit, duration, sell price, active/inactive status
+- Catalog card per item showing: name, type badge (Produk/Layanan), category, unit, duration, sell price, active/inactive status
 
-- FAB (Floating Action Button) --- \"Tambah Obat\" → opens drug form
+- FAB (Floating Action Button) --- "Tambah Item" → opens catalog form
 
-**Drug Form --- Fields**
+**Catalog Form --- Fields**
 
-| **Field**                           | **Input Type** | **Notes**                                                      |
-|-------------------------------------|----------------|----------------------------------------------------------------|
-| Name                                | Text input     | e.g. Vitamin D                                                 |
-| Category                            | Select         | vitamin \| suplemen \| KB \| obat \| lainnya                   |
-| Satuan jual (dispense_unit)         | Select         | tablet \| kapsul \| botol \| ampul \| strip \| sachet \| tube  |
-| Satuan beli (package_unit)          | Select         | box \| strip \| botol \| blister \| dus                        |
-| Isi per kemasan (units_per_package) | Number         | e.g. 30 → \"1 box = 30 tablet\"                                |
-| Durasi per satuan jual              | Number         | Days per 1 dispense unit --- e.g. 1 = \"1 tablet lasts 1 day\" |
-| Harga jual per satuan               | Currency input | Price charged to patient per tablet/botol                      |
-| Harga beli per kemasan              | Currency input | Bidan purchase cost --- used for margin tracking               |
-| Catatan                             | Textarea       | Optional notes                                                 |
-| Status                              | Toggle         | Active / Inactive (soft delete)                                |
+| **Field**        | **Input Type** | **Notes**                                                   |
+|------------------|----------------|-------------------------------------------------------------|
+| Name             | Text input     | e.g. Vitamin D, Pemeriksaan Kehamilan                       |
+| Tipe             | Toggle/Select  | product \| service                                          |
+| Kategori         | Select         | Custom categories per org                                   |
+| Satuan           | Text/Select    | tablet, botol, sesi, kali, etc.                             |
+| Harga Jual       | Currency input | Price per unit                                              |
+| Harga Modal      | Currency input | Optional, nullable (for margin tracking)                    |
+| Durasi (hari)    | Number         | Days until follow-up per 1 unit                             |
+| Catatan          | Textarea       | Optional notes                                              |
+| Status           | Toggle         | Active / Inactive (soft delete)                             |
 
 *Helper preview shown below form in real-time:*
 
-> \"Jika pasien beli 30 tablet → durasi 30 hari → notifikasi pada hari ke-30\"
+> "Jika pasien beli 30 tablet (durasi 1 hari) → follow-up dalam 30 hari"
+> "Jika pasien ambil 1 sesi (durasi 30 hari) → follow-up dalam 30 hari"
 
 **5.6 Page 5 --- Profile (/dashboard/profile)**
 
@@ -471,7 +517,7 @@ Bidan manages their drug product catalog. Each drug entry drives pricing, durati
 >
 > notifications/page.tsx
 >
-> drugs/page.tsx
+> catalog/page.tsx
 >
 > profile/page.tsx
 >
@@ -487,9 +533,19 @@ Bidan manages their drug product catalog. Each drug entry drives pricing, durati
 >
 > transactions/route.ts
 >
-> drugs/route.ts
+> catalog/route.ts
+>
+> catalog/\[id\]/route.ts
+>
+> categories/route.ts
 >
 > patients/route.ts
+>
+> notifications/\[id\]/send/route.ts
+>
+> notifications/\[id\]/outcome/route.ts
+>
+> notifications/\[id\]/reschedule/route.ts
 >
 > page.tsx → main landing page (Next.js template)
 >
@@ -565,7 +621,7 @@ XGBoost prediction is called through a prediction service abstraction. MVP retur
 >
 > async predict(features) {
 >
-> const rate = features.daysSinceLastBuy / features.drugDurationDays
+> const rate = features.daysSinceLastBuy / features.itemDurationDays
 >
 > return Math.min(rate, 1.0)
 >
@@ -601,7 +657,7 @@ When Phase 2 launches, this function extracts features from existing DB data ---
 >
 > export async function extractFeatures(
 >
-> patientId: string, drugId: string, orgId: string
+> patientId: string, catalogItemId: string, orgId: string
 >
 > ): Promise\<PatientFeatures\> {
 >
@@ -609,11 +665,11 @@ When Phase 2 launches, this function extracts features from existing DB data ---
 >
 > daysSinceLastBuy, // from sale_item.purchase_date
 >
-> drugDurationDays, // from drug.duration_per_dispense_unit × qty
+> itemDurationDays, // from catalog_item.duration_days × qty
 >
 > consumptionRate, // from sale_item.consumption_rate history
 >
-> totalPurchasesLifetime, // count of sale_items for this patient+drug
+> totalPurchasesLifetime, // count of sale_items for this patient+item
 >
 > avgIntervalBetweenBuys, // avg days between consecutive purchases
 >
@@ -625,9 +681,9 @@ When Phase 2 launches, this function extracts features from existing DB data ---
 >
 > patientCondition, // from patient_condition (current)
 >
-> drugCategory, // from drug.category
+> itemCategory, // from catalog_item.category
 >
-> drugPrice, // from drug.sell_price_per_dispense
+> itemPrice, // from catalog_item.sell_price
 >
 > patientAge, // derived from patient.birth_date
 >
@@ -637,32 +693,37 @@ When Phase 2 launches, this function extracts features from existing DB data ---
 
 **6.5 TanStack Query Conventions**
 
-| **Query Key**                   | **Endpoint**                     | **Stale Time** |
-|---------------------------------|----------------------------------|----------------|
-| \[\"sales\", period\]           | GET /api/dashboard/sales?period= | 5 min          |
-| \[\"notifications\", orgId\]    | GET /api/dashboard/notifications | 1 min          |
-| \[\"drugs\", orgId\]            | GET /api/drugs                   | 10 min         |
-| \[\"patients\", orgId, search\] | GET /api/patients?q=             | 2 min          |
-| \[\"transaction\", id\]         | GET /api/transactions/:id        | 10 min         |
+| **Query Key**                    | **Endpoint**                     | **Stale Time** |
+|----------------------------------|----------------------------------|----------------|
+| \["sales", period\]            | GET /api/dashboard/sales?period= | 5 min          |
+| \["notifications", orgId\]     | GET /api/dashboard/notifications | 1 min          |
+| \["catalog-items", orgId\]     | GET /api/catalog                 | 10 min         |
+| \["categories", orgId\]        | GET /api/categories              | 10 min         |
+| \["patients", orgId, search\]  | GET /api/patients?q=             | 2 min          |
+| \["transaction", id\]          | GET /api/transactions/:id        | 10 min         |
 
 Mutations call invalidateQueries on related keys after success. All queries include organization_id from session --- never passed as URL param from client.
 
 **7. API Route Reference**
 
-| **Method** | **Route**                      | **Description**                              |
-|------------|--------------------------------|----------------------------------------------|
-| GET        | /api/dashboard/sales           | Revenue + comparison data                    |
-| GET        | /api/dashboard/notifications   | Notification queue for today                 |
-| GET        | /api/patients                  | Search patients by name or WA                |
-| POST       | /api/patients                  | Create new patient                           |
-| GET        | /api/drugs                     | List all drugs for org                       |
-| POST       | /api/drugs                     | Add new drug                                 |
-| PATCH      | /api/drugs/:id                 | Update drug                                  |
-| POST       | /api/transactions              | Create transaction + sale_items + notif_logs |
-| PATCH      | /api/notifications/:id/send    | Mark as sent, update status                  |
-| PATCH      | /api/notifications/:id/outcome | Set outcome (bought/ignored/no_response)     |
-| GET        | /api/profile                   | Get bidan + clinic info                      |
-| PATCH      | /api/profile                   | Update clinic info                           |
+| **Method** | **Route**                          | **Description**                              |
+|------------|------------------------------------|----------------------------------------------|
+| GET        | /api/dashboard/sales               | Revenue + comparison data                    |
+| GET        | /api/dashboard/notifications       | Notification queue for today                 |
+| GET        | /api/patients                      | Search patients by name or WA                |
+| POST       | /api/patients                      | Create new patient                           |
+| GET        | /api/catalog                       | List all catalog items for org               |
+| POST       | /api/catalog                       | Add new catalog item                         |
+| PATCH      | /api/catalog/:id                   | Update catalog item                          |
+| DELETE     | /api/catalog/:id                   | Delete catalog item                          |
+| GET        | /api/categories                    | List all categories for org                  |
+| POST       | /api/categories                    | Add new category                             |
+| POST       | /api/transactions                  | Create transaction + sale_items + notif_logs |
+| PATCH      | /api/notifications/:id/send        | Mark as sent, update status                  |
+| PATCH      | /api/notifications/:id/outcome     | Set outcome (bought/ignored/no_response)     |
+| POST       | /api/notifications/:id/reschedule  | Create new follow-up notification            |
+| GET        | /api/profile                       | Get bidan + clinic info                      |
+| PATCH      | /api/profile                       | Update clinic info                           |
 
 **8. Phase 2 Upgrade Plan (+3 Months)**
 
@@ -692,7 +753,7 @@ Mutations call invalidateQueries on related keys after success. All queries incl
 
 - better-auth organization plugin already installed --- just enable member invitation UI in Profile page.
 
-- Invite assistant bidan → they join the same organization → see same patients and drugs.
+- Invite assistant bidan → they join the same organization → see same patients and catalog items.
 
 - Role-based access can be added (owner vs member) using better-auth built-in roles.
 
@@ -704,4 +765,4 @@ Mutations call invalidateQueries on related keys after success. All queries incl
 | 2      | Google Cloud project setup for Vertex AI XGBoost endpoint.                                                   | Month 2                |
 | 3      | Minimum data threshold before training XGBoost --- recommend 500+ notification outcomes.                     | Month 5-6              |
 | 4      | Multi-bidan invite --- confirm if Phase 2 or later.                                                          | Month 3                |
-| 5      | Drug stock tracking (inventory management) --- currently out of scope. Add?                                  | TBD                    |
+| 5      | Inventory/stock tracking --- currently out of scope. Add?                                                    | TBD                    |

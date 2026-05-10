@@ -114,9 +114,9 @@ export default function SalesPage() {
             />
           ) : (
             metricsData?.topProducts.map((product) => (
-              <div className="pr" key={product.drugId}>
+              <div className="pr" key={product.catalogItemId}>
                 <div style={{ minWidth: 0 }}>
-                  <p className="pn">{product.drugName}</p>
+                  <p className="pn">{product.catalogItemName}</p>
                   <p className="pm">{product.unitsSold} unit terjual</p>
                 </div>
                 <p className="pp">{formatCurrencyShort(product.revenue)}</p>

@@ -1,5 +1,5 @@
 {
-  "id": "fbb219c5-2470-4c80-bf6d-c2f6b6f80ccf",
+  "id": "ce7e4f3b-a192-474c-bc97-87ef7ea11c93",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -146,8 +146,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.drug": {
-      "name": "drug",
+    "public.catalog_item": {
+      "name": "catalog_item",
       "schema": "",
       "columns": {
         "id": {
@@ -168,47 +168,41 @@
           "primaryKey": false,
           "notNull": true
         },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "category": {
           "name": "category",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "dispense_unit": {
-          "name": "dispense_unit",
+        "unit": {
+          "name": "unit",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "package_unit": {
-          "name": "package_unit",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "units_per_package": {
-          "name": "units_per_package",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "duration_per_dispense_unit": {
-          "name": "duration_per_dispense_unit",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sell_price_per_dispense": {
-          "name": "sell_price_per_dispense",
+        "sell_price": {
+          "name": "sell_price",
           "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": true
         },
-        "buy_price_per_package": {
-          "name": "buy_price_per_package",
+        "cost_price": {
+          "name": "cost_price",
           "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": false
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         },
         "is_active": {
           "name": "is_active",
@@ -232,8 +226,8 @@
         }
       },
       "indexes": {
-        "drug_organization_idx": {
-          "name": "drug_organization_idx",
+        "catalog_item_organization_idx": {
+          "name": "catalog_item_organization_idx",
           "columns": [
             {
               "expression": "organization_id",
@@ -247,8 +241,8 @@
           "method": "btree",
           "with": {}
         },
-        "drug_name_idx": {
-          "name": "drug_name_idx",
+        "catalog_item_name_idx": {
+          "name": "catalog_item_name_idx",
           "columns": [
             {
               "expression": "name",
@@ -262,8 +256,8 @@
           "method": "btree",
           "with": {}
         },
-        "drug_active_idx": {
-          "name": "drug_active_idx",
+        "catalog_item_active_idx": {
+          "name": "catalog_item_active_idx",
           "columns": [
             {
               "expression": "is_active",
@@ -277,8 +271,8 @@
           "method": "btree",
           "with": {}
         },
-        "drug_created_idx": {
-          "name": "drug_created_idx",
+        "catalog_item_created_idx": {
+          "name": "catalog_item_created_idx",
           "columns": [
             {
               "expression": "created_at",
@@ -294,9 +288,145 @@
         }
       },
       "foreignKeys": {
-        "drug_organization_id_organization_id_fk": {
-          "name": "drug_organization_id_organization_id_fk",
-          "tableFrom": "drug",
+        "catalog_item_organization_id_organization_id_fk": {
+          "name": "catalog_item_organization_id_organization_id_fk",
+          "tableFrom": "catalog_item",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.category": {
+      "name": "category",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "category_organization_idx": {
+          "name": "category_organization_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "category_organization_id_organization_id_fk": {
+          "name": "category_organization_id_organization_id_fk",
+          "tableFrom": "category",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.condition": {
+      "name": "condition",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "condition_organization_idx": {
+          "name": "condition_organization_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "condition_organization_id_organization_id_fk": {
+          "name": "condition_organization_id_organization_id_fk",
+          "tableFrom": "condition",
           "tableTo": "organization",
           "columnsFrom": [
             "organization_id"
@@ -1064,8 +1194,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "drug_id": {
-          "name": "drug_id",
+        "catalog_item_id": {
+          "name": "catalog_item_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1129,11 +1259,11 @@
           "method": "btree",
           "with": {}
         },
-        "sale_item_drug_idx": {
-          "name": "sale_item_drug_idx",
+        "sale_item_catalog_item_idx": {
+          "name": "sale_item_catalog_item_idx",
           "columns": [
             {
-              "expression": "drug_id",
+              "expression": "catalog_item_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1174,12 +1304,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "sale_item_drug_id_drug_id_fk": {
-          "name": "sale_item_drug_id_drug_id_fk",
+        "sale_item_catalog_item_id_catalog_item_id_fk": {
+          "name": "sale_item_catalog_item_id_catalog_item_id_fk",
           "tableFrom": "sale_item",
-          "tableTo": "drug",
+          "tableTo": "catalog_item",
           "columnsFrom": [
-            "drug_id"
+            "catalog_item_id"
           ],
           "columnsTo": [
             "id"
@@ -1248,6 +1378,18 @@
         },
         "impersonatedBy": {
           "name": "impersonatedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activeOrganizationId": {
+          "name": "activeOrganizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activeTeamId": {
+          "name": "activeTeamId",
           "type": "text",
           "primaryKey": false,
           "notNull": false

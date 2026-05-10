@@ -7,9 +7,9 @@ export function calculateSubtotal(
 
 export function calculateDurationDays(
   quantityDispense: number,
-  durationPerDispenseUnit: number,
+  durationDays: number,
 ): number {
-  return quantityDispense * durationPerDispenseUnit;
+  return quantityDispense * durationDays;
 }
 
 export function calculateNextExpectedBuy(

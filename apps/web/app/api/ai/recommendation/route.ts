@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { streamText } from "ai";
 import { db } from "@repo/db";
-import { transaction, saleItem, drug, patient } from "@repo/db/schema";
+import { transaction, saleItem, catalogItem, patient } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -52,22 +52,22 @@ export async function POST(request: NextRequest) {
     allSaleItems.push(...items);
   }
 
-  // Fetch drugs
-  const drugIds = [...new Set(allSaleItems.map((i) => i.drugId))];
-  const allDrugs: (typeof drug.$inferSelect)[] = [];
-  for (const dId of drugIds) {
-    const d = await db.select().from(drug).where(eq(drug.id, dId)).limit(1);
-    if (d[0]) allDrugs.push(d[0]);
+  // Fetch catalog items
+  const catalogItemIds = [...new Set(allSaleItems.map((i) => i.catalogItemId))];
+  const allItems: (typeof catalogItem.$inferSelect)[] = [];
+  for (const ciId of catalogItemIds) {
+    const ci = await db.select().from(catalogItem).where(eq(catalogItem.id, ciId)).limit(1);
+    if (ci[0]) allItems.push(ci[0]);
   }
-  const drugMap = new Map(allDrugs.map((d) => [d.id, d]));
+  const itemMap = new Map(allItems.map((ci) => [ci.id, ci]));
 
   // Format purchase history
   const historyLines = txs.map((tx) => {
     const items = allSaleItems.filter((i) => i.transactionId === tx.id);
     const itemStr = items
       .map((item) => {
-        const d = drugMap.get(item.drugId);
-        return `${d?.name ?? "Obat"} x${item.quantityDispense}`;
+        const ci = itemMap.get(item.catalogItemId);
+        return `${ci?.name ?? "Item"} x${item.quantityDispense}`;
       })
       .join(", ");
     return `- ${tx.purchaseDate.toLocaleDateString("id-ID")}: ${itemStr} (Rp${Number(tx.totalPrice).toLocaleString("id-ID")})`;
@@ -82,13 +82,13 @@ ${pat.birthDate ? `Usia: ${calculateAge(pat.birthDate)} tahun` : ""}
 Riwayat Pembelian Terakhir:
 ${historyLines.length > 0 ? historyLines.join("\n") : "- Belum ada riwayat pembelian"}
 
-Berdasarkan riwayat pembelian di atas, berikan rekomendasi **obat apa yang paling cocok ditawarkan** saat follow-up hari ini.
+Berdasarkan riwayat pembelian di atas, berikan rekomendasi **item apa yang paling cocok ditawarkan** saat follow-up hari ini.
 
 Jawaban wajib sangat singkat (maksimal 60 kata) dengan format markdown:
-- **Rekomendasi Obat:** [1-2 obat spesifik yang bisa ditawarkan] — [alasan singkat]
-- **Tawarkan Juga:** [obat pelengkap lain jika relevan, atau "Tidak ada"]
+- **Rekomendasi Item:** [1-2 item spesifik yang bisa ditawarkan] — [alasan singkat]
+- **Tawarkan Juga:** [item pelengkap lain jika relevan, atau "Tidak ada"]
 
-Contoh: "**Rekomendasi Obat:** Vitamin B12 — pasien rutin beli tiap bulan, stok mungkin habis. **Tawarkan Juga:** Asam Folat untuk dukung kehamilan."
+Contoh: "**Rekomendasi Item:** Vitamin B12 — pasien rutin beli tiap bulan, stok mungkin habis. **Tawarkan Juga:** Asam Folat untuk dukung kehamilan."
 
 Bahasa Indonesia santai, profesional, mudah dipahami bidan.`;
 

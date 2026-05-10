@@ -7,7 +7,7 @@ interface CreateTransactionInput {
   patient_condition?: string | null;
   notes?: string | null;
   items: Array<{
-    drug_id: string;
+    catalog_item_id: string;
     quantity_dispense: number;
     price_per_dispense: number;
   }>;

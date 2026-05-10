@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { DrugCard } from "@/components/dashboard/DrugCard";
-import { useDrugs } from "@/hooks/use-drugs";
-import { useDrugCategories } from "@/hooks/use-drug-categories";
-import { QuickAddDrugCategoryModal } from "@/components/dashboard/QuickAddDrugCategoryModal";
+import { CatalogItemCard } from "@/components/dashboard/CatalogItemCard";
+import { useCatalogItems } from "@/hooks/use-catalog-items";
+import { useCategories } from "@/hooks/use-categories";
+import { QuickAddCategoryModal } from "@/components/dashboard/QuickAddCategoryModal";
 import { CurrencyInput } from "@/components/dashboard/CurrencyInput";
 import { Input } from "@repo/ui/components/input";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { toast } from "sonner";
 import { Pencil, Trash2, Power, PowerOff } from "lucide-react";
-import { AvatarButton } from "@/components/dashboard/AvatarButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SearchBar } from "@/components/design-system/SearchBar";
 import { FAB } from "@/components/design-system/FAB";
 import { BottomSheet } from "@/components/design-system/BottomSheet";
-import type { Drug } from "@repo/types";
+import type { CatalogItem } from "@repo/types";
 
 function IPlus() {
   return (
@@ -27,17 +26,18 @@ function IPlus() {
   );
 }
 
-export default function DrugsPage() {
-  const { data, isLoading, refetch } = useDrugs();
-  const { data: categoriesData, isLoading: categoriesLoading } = useDrugCategories();
+export default function CatalogPage() {
+  const { data, isLoading, refetch } = useCatalogItems();
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [activeCategory, setActiveCategory] = useState<string>("Semua");
+  const [activeType, setActiveType] = useState<string>("Semua");
   const [open, setOpen] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -48,46 +48,44 @@ export default function DrugsPage() {
 
   const [form, setForm] = useState({
     name: "",
+    type: "product" as "product" | "service",
     category: "",
-    dispense_unit: "tablet",
-    package_unit: "box",
-    units_per_package: 1,
-    duration_per_dispense_unit: 1,
-    sell_price_per_dispense: 0,
-    buy_price_per_package: 0,
+    unit: "",
+    sell_price: 0,
+    cost_price: 0,
+    duration_days: 1,
     notes: "",
   });
 
   const [editForm, setEditForm] = useState({
     name: "",
+    type: "product" as "product" | "service",
     category: "",
-    dispense_unit: "tablet",
-    package_unit: "box",
-    units_per_package: 1,
-    duration_per_dispense_unit: 1,
-    sell_price_per_dispense: 0,
-    buy_price_per_package: 0,
+    unit: "",
+    sell_price: 0,
+    cost_price: 0,
+    duration_days: 1,
     notes: "",
   });
 
-  const filtered = data?.drugs.filter((drug) => {
-    const matchesSearch = drug.name.toLowerCase().includes(debouncedSearch.toLowerCase());
-    const matchesCategory = activeCategory === "Semua" || drug.category === activeCategory;
-    return matchesSearch && matchesCategory;
+  const filtered = data?.items.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const matchesCategory = activeCategory === "Semua" || item.category === activeCategory;
+    const matchesType = activeType === "Semua" || item.type === activeType;
+    return matchesSearch && matchesCategory && matchesType;
   });
 
-  function openDetail(drug: Drug) {
-    setSelectedDrug(drug);
+  function openDetail(item: CatalogItem) {
+    setSelectedItem(item);
     setEditForm({
-      name: drug.name,
-      category: drug.category,
-      dispense_unit: drug.dispenseUnit,
-      package_unit: drug.packageUnit,
-      units_per_package: drug.unitsPerPackage,
-      duration_per_dispense_unit: drug.durationPerDispenseUnit,
-      sell_price_per_dispense: Number(drug.sellPricePerDispense),
-      buy_price_per_package: Number(drug.buyPricePerPackage),
-      notes: drug.notes ?? "",
+      name: item.name,
+      type: item.type,
+      category: item.category ?? "",
+      unit: item.unit,
+      sell_price: Number(item.sellPrice),
+      cost_price: Number(item.costPrice ?? 0),
+      duration_days: item.durationDays,
+      notes: item.notes ?? "",
     });
     setEditMode(false);
     setDetailOpen(true);
@@ -97,21 +95,20 @@ export default function DrugsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/drugs", {
+      const res = await fetch("/api/catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Gagal menambahkan obat");
+        throw new Error(err.error ?? "Gagal menambahkan item");
       }
-      toast.success("Obat berhasil ditambahkan");
+      toast.success("Item berhasil ditambahkan");
       setOpen(false);
       setForm({
-        name: "", category: "", dispense_unit: "tablet", package_unit: "box",
-        units_per_package: 1, duration_per_dispense_unit: 1,
-        sell_price_per_dispense: 0, buy_price_per_package: 0, notes: "",
+        name: "", type: "product", category: "", unit: "",
+        sell_price: 0, cost_price: 0, duration_days: 1, notes: "",
       });
       refetch();
     } catch (err: any) {
@@ -123,22 +120,22 @@ export default function DrugsPage() {
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedDrug) return;
+    if (!selectedItem) return;
     setDetailSubmitting(true);
     try {
-      const res = await fetch(`/api/drugs/${selectedDrug.id}`, {
+      const res = await fetch(`/api/catalog/${selectedItem.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Gagal mengupdate obat");
+        throw new Error(err.error ?? "Gagal mengupdate item");
       }
-      toast.success("Obat berhasil diupdate");
+      toast.success("Item berhasil diupdate");
       setEditMode(false);
       setDetailOpen(false);
-      setSelectedDrug(null);
+      setSelectedItem(null);
       refetch();
     } catch (err: any) {
       toast.error(err.message);
@@ -148,21 +145,21 @@ export default function DrugsPage() {
   }
 
   async function handleToggleActive() {
-    if (!selectedDrug) return;
+    if (!selectedItem) return;
     setDetailSubmitting(true);
     try {
-      const res = await fetch(`/api/drugs/${selectedDrug.id}`, {
+      const res = await fetch(`/api/catalog/${selectedItem.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !selectedDrug.isActive }),
+        body: JSON.stringify({ is_active: !selectedItem.isActive }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error ?? "Gagal mengupdate status");
       }
-      toast.success(selectedDrug.isActive ? "Obat dinonaktifkan" : "Obat diaktifkan");
+      toast.success(selectedItem.isActive ? "Item dinonaktifkan" : "Item diaktifkan");
       setDetailOpen(false);
-      setSelectedDrug(null);
+      setSelectedItem(null);
       refetch();
     } catch (err: any) {
       toast.error(err.message);
@@ -172,18 +169,18 @@ export default function DrugsPage() {
   }
 
   async function handleDelete() {
-    if (!selectedDrug) return;
+    if (!selectedItem) return;
     setDetailSubmitting(true);
     try {
-      const res = await fetch(`/api/drugs/${selectedDrug.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/catalog/${selectedItem.id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Gagal menghapus obat");
+        throw new Error(err.error ?? "Gagal menghapus item");
       }
-      toast.success("Obat berhasil dihapus");
+      toast.success("Item berhasil dihapus");
       setDeleteConfirmOpen(false);
       setDetailOpen(false);
-      setSelectedDrug(null);
+      setSelectedItem(null);
       refetch();
     } catch (err: any) {
       toast.error(err.message);
@@ -195,11 +192,23 @@ export default function DrugsPage() {
   return (
     <div className="space-y-4">
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <h1 className="t">Katalog Obat</h1>
-        <span className="c">{data?.drugs?.length ?? 0} jenis</span>
+        <h1 className="t">Katalog</h1>
+        <span className="c">{data?.items?.length ?? 0} jenis</span>
       </header>
 
-      <SearchBar placeholder="Cari obat..." value={search} onChange={setSearch} />
+      <SearchBar placeholder="Cari item..." value={search} onChange={setSearch} />
+
+      <div className="pillrow">
+        {["Semua", "Produk", "Layanan"].map((t) => (
+          <button
+            key={t}
+            className={`pill ${activeType === t ? "on" : ""}`}
+            onClick={() => setActiveType(t)}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
 
       {categoriesLoading ? (
         <Skeleton className="h-9 w-full" />
@@ -226,34 +235,53 @@ export default function DrugsPage() {
       ) : filtered?.length === 0 ? (
         <EmptyState
           icon="pill"
-          title="Tidak ada obat"
-          description={search ? "Coba kata kunci lain atau tambahkan obat baru" : "Katalog obat masih kosong. Tambahkan obat pertama Anda."}
-          actionLabel="Tambah Obat"
+          title="Tidak ada item"
+          description={search ? "Coba kata kunci lain atau tambahkan item baru" : "Katalog masih kosong. Tambahkan item pertama Anda."}
+          actionLabel="Tambah Item"
           onAction={() => setOpen(true)}
         />
       ) : (
         <div className="space-y-3">
-          {filtered?.map((drug) => (
-            <DrugCard key={drug.id} drug={drug} onClick={() => openDetail(drug)} />
+          {filtered?.map((item) => (
+            <CatalogItemCard key={item.id} item={item} onClick={() => openDetail(item)} />
           ))}
         </div>
       )}
 
-      <FAB onClick={() => setOpen(true)} label="Tambah Obat" />
+      <FAB onClick={() => setOpen(true)} label="Tambah Item" />
 
-      {/* Add Drug BottomSheet */}
-      <BottomSheet open={open} onClose={() => setOpen(false)} title="Tambah Obat Baru">
+      {/* Add Item BottomSheet */}
+      <BottomSheet open={open} onClose={() => setOpen(false)} title="Tambah Item Baru">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="fg">
-            <label className="fl">Nama Obat</label>
+            <label className="fl">Nama</label>
             <Input
-              id="drug_name"
-              placeholder="Nama obat"
+              id="item_name"
+              placeholder="Nama item"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
               className="fi"
             />
+          </div>
+          <div className="fg">
+            <label className="fl">Tipe</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={`pill ${form.type === "product" ? "on" : ""}`}
+                onClick={() => setForm({ ...form, type: "product" })}
+              >
+                Produk
+              </button>
+              <button
+                type="button"
+                className={`pill ${form.type === "service" ? "on" : ""}`}
+                onClick={() => setForm({ ...form, type: "service" })}
+              >
+                Layanan
+              </button>
+            </div>
           </div>
           <div className="fg">
             <label className="fl">Kategori</label>
@@ -268,7 +296,6 @@ export default function DrugsPage() {
                     setForm({ ...form, category: e.target.value });
                   }
                 }}
-                required
               >
                 <option value="">Pilih kategori...</option>
                 {categories.map((cat) => (
@@ -286,82 +313,63 @@ export default function DrugsPage() {
               </button>
             </div>
           </div>
-          <div className="fr">
-            <div className="fg">
-              <label className="fl">Satuan Jual</label>
-              <Input
-                id="dispense_unit"
-                placeholder="tablet"
-                value={form.dispense_unit}
-                onChange={(e) => setForm({ ...form, dispense_unit: e.target.value })}
-                required
-                className="fi"
-              />
-            </div>
-            <div className="fg">
-              <label className="fl">Satuan Kemasan</label>
-              <Input
-                id="package_unit"
-                placeholder="box"
-                value={form.package_unit}
-                onChange={(e) => setForm({ ...form, package_unit: e.target.value })}
-                required
-                className="fi"
-              />
-            </div>
+          <div className="fg">
+            <label className="fl">Satuan</label>
+            <Input
+              id="unit"
+              placeholder="tablet, botol, sesi..."
+              value={form.unit}
+              onChange={(e) => setForm({ ...form, unit: e.target.value })}
+              required
+              className="fi"
+            />
           </div>
           <div className="fr">
             <div className="fg">
-              <label className="fl">Isi per Kemasan</label>
-              <Input
-                id="units_per_package"
-                type="number"
-                min={1}
-                value={form.units_per_package}
-                onChange={(e) => setForm({ ...form, units_per_package: parseInt(e.target.value) || 0 })}
-                required
-                className="fi"
-              />
-              <p className="c">Jumlah unit dalam satu kemasan (contoh: 10 tablet/strip)</p>
-            </div>
-            <div className="fg">
-              <label className="fl">Durasi per Satuan (hari)</label>
-              <Input
-                id="duration"
-                type="number"
-                min={1}
-                value={form.duration_per_dispense_unit}
-                onChange={(e) => setForm({ ...form, duration_per_dispense_unit: parseInt(e.target.value) || 0 })}
-                required
-                className="fi"
-              />
-              <p className="c">Berapa hari 1 unit habis (contoh: 1 tablet = 1 hari)</p>
-            </div>
-          </div>
-          <div className="fr">
-            <div className="fg">
-              <label className="fl">Harga Jual per Satuan</label>
+              <label className="fl">Harga Jual</label>
               <CurrencyInput
                 id="sell_price"
-                value={form.sell_price_per_dispense}
-                onChange={(v) => setForm({ ...form, sell_price_per_dispense: v })}
+                value={form.sell_price}
+                onChange={(v) => setForm({ ...form, sell_price: v })}
                 placeholder="0"
                 required
               />
             </div>
             <div className="fg">
-              <label className="fl">Harga Beli per Kemasan</label>
+              <label className="fl">Harga Modal</label>
               <CurrencyInput
-                id="buy_price"
-                value={form.buy_price_per_package}
-                onChange={(v) => setForm({ ...form, buy_price_per_package: v })}
+                id="cost_price"
+                value={form.cost_price}
+                onChange={(v) => setForm({ ...form, cost_price: v })}
                 placeholder="0"
-                required
               />
             </div>
           </div>
+          <div className="fg">
+            <label className="fl">Durasi (hari per unit)</label>
+            <Input
+              id="duration_days"
+              type="number"
+              min={1}
+              value={form.duration_days}
+              onChange={(e) => setForm({ ...form, duration_days: parseInt(e.target.value) || 1 })}
+              required
+              className="fi"
+            />
+            <p className="c">Berapa hari 1 unit sampai follow-up</p>
+          </div>
+          <div className="fg">
+            <label className="fl">Catatan</label>
+            <Input
+              id="notes"
+              placeholder="Catatan opsional"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="fi"
+            />
+          </div>
           <button type="submit" className="bp" disabled={submitting}>
-            {submitting ? "Menyimpan..." : "Simpan Obat"}
+            {submitting ? "Menyimpan..." : "Simpan Item"}
           </button>
         </form>
       </BottomSheet>
@@ -369,36 +377,36 @@ export default function DrugsPage() {
       {/* Detail / Edit BottomSheet */}
       <BottomSheet
         open={detailOpen}
-        onClose={() => { setDetailOpen(false); setSelectedDrug(null); setEditMode(false); }}
-        title={editMode ? "Edit Obat" : "Detail Obat"}
+        onClose={() => { setDetailOpen(false); setSelectedItem(null); setEditMode(false); }}
+        title={editMode ? "Edit Item" : "Detail Item"}
       >
-        {selectedDrug && !editMode && (
+        {selectedItem && !editMode && (
           <div className="space-y-4">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div>
-                <p className="d" style={{ fontSize: "20px" }}>{selectedDrug.name}</p>
-                <p className="c">{selectedDrug.category} · {selectedDrug.dispenseUnit}</p>
+                <p className="d" style={{ fontSize: "20px" }}>{selectedItem.name}</p>
+                <p className="c">{selectedItem.category} · {selectedItem.unit} · {selectedItem.type === "service" ? "Layanan" : "Produk"}</p>
               </div>
               <p className="d" style={{ fontSize: "18px", color: "#2e7d32" }}>
-                Rp {Number(selectedDrug.sellPricePerDispense).toLocaleString("id-ID")}
+                Rp {Number(selectedItem.sellPrice).toLocaleString("id-ID")}
               </p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
               <div className="card" style={{ padding: "12px" }}>
-                <p className="c">Harga Beli</p>
-                <p className="h">Rp {Number(selectedDrug.buyPricePerPackage).toLocaleString("id-ID")}</p>
+                <p className="c">Harga Modal</p>
+                <p className="h">Rp {Number(selectedItem.costPrice ?? 0).toLocaleString("id-ID")}</p>
               </div>
               <div className="card" style={{ padding: "12px" }}>
-                <p className="c">Kemasan</p>
-                <p className="h">{selectedDrug.packageUnit}</p>
-              </div>
-              <div className="card" style={{ padding: "12px" }}>
-                <p className="c">Isi per Kemasan</p>
-                <p className="h">{selectedDrug.unitsPerPackage}</p>
+                <p className="c">Satuan</p>
+                <p className="h">{selectedItem.unit}</p>
               </div>
               <div className="card" style={{ padding: "12px" }}>
                 <p className="c">Durasi</p>
-                <p className="h">{selectedDrug.durationPerDispenseUnit} hari</p>
+                <p className="h">{selectedItem.durationDays} hari</p>
+              </div>
+              <div className="card" style={{ padding: "12px" }}>
+                <p className="c">Tipe</p>
+                <p className="h">{selectedItem.type === "service" ? "Layanan" : "Produk"}</p>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
@@ -409,11 +417,11 @@ export default function DrugsPage() {
                   borderRadius: "9999px",
                   fontSize: "12px",
                   fontWeight: 600,
-                  background: selectedDrug.isActive ? "#e8f5e9" : "#f5f5f5",
-                  color: selectedDrug.isActive ? "#2e7d32" : "var(--bidan-muted)",
+                  background: selectedItem.isActive ? "#e8f5e9" : "#f5f5f5",
+                  color: selectedItem.isActive ? "#2e7d32" : "var(--bidan-muted)",
                 }}
               >
-                {selectedDrug.isActive ? "Aktif" : "Nonaktif"}
+                {selectedItem.isActive ? "Aktif" : "Nonaktif"}
               </span>
             </div>
             <div className="space-y-2">
@@ -422,7 +430,7 @@ export default function DrugsPage() {
                 Edit
               </button>
               <button className="bg" onClick={handleToggleActive} disabled={detailSubmitting}>
-                {selectedDrug.isActive ? (
+                {selectedItem.isActive ? (
                   <>
                     <PowerOff className="size-4 text-destructive" />
                     Nonaktifkan
@@ -442,11 +450,30 @@ export default function DrugsPage() {
           </div>
         )}
 
-        {selectedDrug && editMode && (
+        {selectedItem && editMode && (
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="fg">
-              <label className="fl">Nama Obat</label>
+              <label className="fl">Nama</label>
               <Input id="edit_name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required className="fi" />
+            </div>
+            <div className="fg">
+              <label className="fl">Tipe</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`pill ${editForm.type === "product" ? "on" : ""}`}
+                  onClick={() => setEditForm({ ...editForm, type: "product" })}
+                >
+                  Produk
+                </button>
+                <button
+                  type="button"
+                  className={`pill ${editForm.type === "service" ? "on" : ""}`}
+                  onClick={() => setEditForm({ ...editForm, type: "service" })}
+                >
+                  Layanan
+                </button>
+              </div>
             </div>
             <div className="fg">
               <label className="fl">Kategori</label>
@@ -461,7 +488,6 @@ export default function DrugsPage() {
                       setEditForm({ ...editForm, category: e.target.value });
                     }
                   }}
-                  required
                 >
                   <option value="">Pilih kategori...</option>
                   {categories.map((cat) => (
@@ -479,35 +505,23 @@ export default function DrugsPage() {
                 </button>
               </div>
             </div>
-            <div className="fr">
-              <div className="fg">
-                <label className="fl">Satuan Jual</label>
-                <Input id="edit_dispense_unit" value={editForm.dispense_unit} onChange={(e) => setEditForm({ ...editForm, dispense_unit: e.target.value })} required className="fi" />
-              </div>
-              <div className="fg">
-                <label className="fl">Satuan Kemasan</label>
-                <Input id="edit_package_unit" value={editForm.package_unit} onChange={(e) => setEditForm({ ...editForm, package_unit: e.target.value })} required className="fi" />
-              </div>
+            <div className="fg">
+              <label className="fl">Satuan</label>
+              <Input id="edit_unit" value={editForm.unit} onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })} required className="fi" />
             </div>
             <div className="fr">
               <div className="fg">
-                <label className="fl">Isi per Kemasan</label>
-                <Input id="edit_units_per_package" type="number" min={1} value={editForm.units_per_package} onChange={(e) => setEditForm({ ...editForm, units_per_package: parseInt(e.target.value) || 0 })} required className="fi" />
+                <label className="fl">Harga Jual</label>
+                <CurrencyInput id="edit_sell_price" value={editForm.sell_price} onChange={(v) => setEditForm({ ...editForm, sell_price: v })} placeholder="0" required />
               </div>
               <div className="fg">
-                <label className="fl">Durasi per Satuan (hari)</label>
-                <Input id="edit_duration" type="number" min={1} value={editForm.duration_per_dispense_unit} onChange={(e) => setEditForm({ ...editForm, duration_per_dispense_unit: parseInt(e.target.value) || 0 })} required className="fi" />
+                <label className="fl">Harga Modal</label>
+                <CurrencyInput id="edit_cost_price" value={editForm.cost_price} onChange={(v) => setEditForm({ ...editForm, cost_price: v })} placeholder="0" />
               </div>
             </div>
-            <div className="fr">
-              <div className="fg">
-                <label className="fl">Harga Jual per Satuan</label>
-                <CurrencyInput id="edit_sell_price" value={editForm.sell_price_per_dispense} onChange={(v) => setEditForm({ ...editForm, sell_price_per_dispense: v })} placeholder="0" required />
-              </div>
-              <div className="fg">
-                <label className="fl">Harga Beli per Kemasan</label>
-                <CurrencyInput id="edit_buy_price" value={editForm.buy_price_per_package} onChange={(v) => setEditForm({ ...editForm, buy_price_per_package: v })} placeholder="0" required />
-              </div>
+            <div className="fg">
+              <label className="fl">Durasi (hari)</label>
+              <Input id="edit_duration" type="number" min={1} value={editForm.duration_days} onChange={(e) => setEditForm({ ...editForm, duration_days: parseInt(e.target.value) || 1 })} required className="fi" />
             </div>
             <div className="flex gap-2">
               <button type="button" className="bg" onClick={() => setEditMode(false)}>Batal</button>
@@ -523,10 +537,10 @@ export default function DrugsPage() {
       <BottomSheet
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
-        title="Hapus Obat"
+        title="Hapus Item"
       >
         <p className="b" style={{ marginBottom: "20px" }}>
-          Apakah Anda yakin ingin menghapus obat &quot;{selectedDrug?.name}&quot;? Tindakan ini tidak dapat dibatalkan.
+          Apakah Anda yakin ingin menghapus item &quot;{selectedItem?.name}&quot;? Tindakan ini tidak dapat dibatalkan.
         </p>
         <div className="flex gap-2">
           <button className="bg" onClick={() => setDeleteConfirmOpen(false)}>Batal</button>
@@ -536,7 +550,7 @@ export default function DrugsPage() {
         </div>
       </BottomSheet>
 
-      <QuickAddDrugCategoryModal
+      <QuickAddCategoryModal
         open={showAddCategory}
         onOpenChange={setShowAddCategory}
         onCategoryAdded={(cat) => {

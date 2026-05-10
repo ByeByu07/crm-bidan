@@ -2,18 +2,7 @@
 
 export type PatientCondition = string;
 
-export type DrugCategory = string;
-
-export type DispenseUnit =
-  | "tablet"
-  | "kapsul"
-  | "botol"
-  | "ampul"
-  | "strip"
-  | "sachet"
-  | "tube";
-
-export type PackageUnit = "box" | "strip" | "botol" | "blister" | "dus";
+export type CatalogItemType = "product" | "service";
 
 export type NotificationStatus = "pending" | "sent" | "failed" | "skipped";
 
@@ -37,7 +26,7 @@ export interface Condition {
   createdAt: Date;
 }
 
-export interface DrugCategoryItem {
+export interface Category {
   id: string;
   organizationId: string;
   name: string;
@@ -53,17 +42,16 @@ export interface PatientConditionRecord {
   notes?: string | null;
 }
 
-export interface Drug {
+export interface CatalogItem {
   id: string;
   organizationId: string;
   name: string;
-  category: DrugCategory;
-  dispenseUnit: DispenseUnit;
-  packageUnit: PackageUnit;
-  unitsPerPackage: number;
-  durationPerDispenseUnit: number; // days per 1 dispense unit
-  sellPricePerDispense: number; // decimal(12,2)
-  buyPricePerPackage: number; // decimal(12,2)
+  type: CatalogItemType;
+  category?: string | null;
+  unit: string;
+  sellPrice: number; // decimal(12,2)
+  costPrice?: number | null; // decimal(12,2)
+  durationDays: number;
   isActive: boolean;
   notes?: string | null;
   createdAt: Date;
@@ -83,13 +71,13 @@ export interface Transaction {
 export interface SaleItem {
   id: string;
   transactionId: string;
-  drugId: string;
+  catalogItemId: string;
   quantityDispense: number;
   pricePerDispense: number; // snapshot at time of sale
   subtotal: number; // auto: qty * price
-  durationDays: number; // auto: qty * duration_per_dispense_unit
+  durationDays: number; // auto: qty * duration_days
   nextExpectedBuy: Date; // auto: purchase_date + duration_days
-  actualNextBuy?: Date | null; // filled when patient buys same drug again
+  actualNextBuy?: Date | null; // filled when patient buys same item again
   consumptionRate?: number | null; // auto: actual_days / duration_days
 }
 
@@ -121,8 +109,8 @@ export interface SalesChartDataPoint {
 export type MonthlySalesData = SalesChartDataPoint;
 
 export interface TopProduct {
-  drugId: string;
-  drugName: string;
+  catalogItemId: string;
+  catalogItemName: string;
   revenue: number;
   unitsSold: number;
 }
@@ -154,6 +142,8 @@ export interface NotificationQueue {
 export interface NotificationLogItem extends NotificationLog {
   patientName: string;
   whatsappNumber: string;
+  catalogItemName?: string;
+  catalogItemDurationDays?: number;
 }
 
 export interface PatientTransactionHistory {
@@ -163,7 +153,7 @@ export interface PatientTransactionHistory {
   totalPrice: number;
   notes: string | null;
   items: {
-    drugName: string;
+    catalogItemName: string;
     quantityDispense: number;
     pricePerDispense: number;
     subtotal: number;
@@ -185,7 +175,7 @@ export interface NotificationResult {
 
 export interface PatientFeatures {
   daysSinceLastBuy: number;
-  drugDurationDays: number;
+  catalogItemDurationDays: number;
   consumptionRate: number;
   totalPurchasesLifetime: number;
   avgIntervalBetweenBuys: number;
@@ -193,8 +183,8 @@ export interface PatientFeatures {
   ignoreRateLast3Months: number;
   previousOutcome: NotificationOutcome;
   patientCondition: PatientCondition;
-  drugCategory: DrugCategory;
-  drugPrice: number;
+  catalogItemCategory: string;
+  catalogItemPrice: number;
   patientAge?: number | null;
 }
 

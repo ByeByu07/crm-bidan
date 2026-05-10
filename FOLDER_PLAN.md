@@ -46,7 +46,7 @@ Agents 1-4 run simultaneously. Zero file overlap.
    - `src/index.ts` re-export
    - `src/auth.ts` — auth-related types (SessionUser, Organization, etc.)
    - `src/dashboard.ts` — all domain types per PRD:
-     - `Patient`, `PatientCondition`, `Drug`, `Transaction`, `SaleItem`, `NotificationLog`
+     - `Patient`, `PatientCondition`, `CatalogItem`, `Transaction`, `SaleItem`, `NotificationLog`
      - `SalesPeriod`, `DashboardSalesData`, `NotificationPayload`, `PatientFeatures`
 2. Create `packages/utils/`
    - `package.json` (name: `@repo/utils`, private, type: module)
@@ -79,7 +79,7 @@ Agents 1-4 run simultaneously. Zero file overlap.
    - Drop ALL old SMS tables: `smsProviders`, `providerPricing`, `campaigns`, `providerCampaigns`, `userCampaigns`, `smsMessages`, `creditTransactions`, `paymentTransactions`, `smsBatches`, `providerConfigs`, `apikey`
    - Keep better-auth core tables: `user`, `session`, `account`, `verification`
    - Add better-auth organization tables: `organization`, `member`, `invitation`
-   - Add PRD domain tables: `patient`, `patient_condition`, `drug`, `transaction`, `sale_item`, `notification_log`
+   - Add PRD domain tables: `patient`, `patient_condition`, `catalog_item`, `transaction`, `sale_item`, `notification_log`
    - All domain tables MUST include `organization_id` text FK
 2. Update `packages/db/src/index.ts` to export new schema
 3. Create `packages/db/drizzle.config.ts` if missing
@@ -98,9 +98,10 @@ Agents 1-4 run simultaneously. Zero file overlap.
 | `invitation`        | id, organizationId, email, role, status, expiresAt, inviterId, createdAt                                                                                                                      |
 | `patient`           | id, organization_id, name, whatsapp_number, birth_date, location, notes, created_at                                                                                                           |
 | `patient_condition` | id, patient_id, condition, start_date, end_date, notes                                                                                                                                        |
-| `drug`              | id, organization_id, name, category, dispense_unit, package_unit, units_per_package, duration_per_dispense_unit, sell_price_per_dispense, buy_price_per_package, is_active, notes, created_at |
+| `catalog_item`      | id, organization_id, name, type, category, unit, sell_price, cost_price, duration_days, is_active, notes, created_at                                                                           |
+| `category`          | id, organization_id, name, created_at                                                                                                                                                         |
 | `transaction`       | id, organization_id, patient_id, purchase_date, patient_condition, total_price, notes, created_at                                                                                             |
-| `sale_item`         | id, transaction_id, drug_id, quantity_dispense, price_per_dispense, subtotal, duration_days, next_expected_buy, actual_next_buy, consumption_rate                                             |
+| `sale_item`         | id, transaction_id, catalog_item_id, quantity_dispense, price_per_dispense, subtotal, duration_days, next_expected_buy, actual_next_buy, consumption_rate                                     |
 | `notification_log`  | id, sale_item_id, patient_id, organization_id, scheduled_date, status, sent_at, outcome, wa_message, created_at                                                                               |
 
 ### Boundary Rules
@@ -182,22 +183,24 @@ Agents 1-4 run simultaneously. Zero file overlap.
    - `PredictionService` interface
    - `ruleBasedPredictor` MVP implementation
 5. Create `apps/web/lib/wa-message.ts`
-   - `buildWaMessage(patientName, drugName, nextExpectedBuy)` template
+   - `buildWaMessage(patientName, itemName, nextExpectedBuy)` generic template
 6. Create `apps/web/lib/feature-extractor.ts`
-   - Stub function `extractFeatures(patientId, drugId, orgId)` returning `PatientFeatures`
+   - Stub function `extractFeatures(patientId, catalogItemId, orgId)` returning `PatientFeatures`
 7. Create API routes per PRD Section 7:
    - `app/api/auth/[...all]/route.ts` — better-auth handler
    - `app/api/patients/route.ts` — GET (search), POST (create)
-   - `app/api/drugs/route.ts` — GET (list), POST (create)
-   - `app/api/drugs/[id]/route.ts` — PATCH (update)
+   - `app/api/catalog/route.ts` — GET (list), POST (create)
+   - `app/api/catalog/[id]/route.ts` — PATCH (update), DELETE
+   - `app/api/categories/route.ts` — GET (list), POST (create)
    - `app/api/transactions/route.ts` — POST (create transaction + sale_items + notif_logs)
    - `app/api/dashboard/sales/route.ts` — GET (revenue aggregates)
    - `app/api/dashboard/notifications/route.ts` — GET (notification queue)
    - `app/api/notifications/[id]/send/route.ts` — PATCH (mark sent)
    - `app/api/notifications/[id]/outcome/route.ts` — PATCH (set outcome)
+   - `app/api/notifications/[id]/reschedule/route.ts` — POST (create new follow-up notification)
    - `app/api/profile/route.ts` — GET, PATCH
 8. Create hooks in `apps/web/hooks/`:
-   - `useSales(period)`, `useNotifications()`, `useDrugs()`, `usePatients(search)`, `useCreateTransaction()`, `useSendNotification()`, `useSetOutcome()`
+   - `useSales(period)`, `useNotifications()`, `useCatalogItems()`, `usePatients(search)`, `useCreateTransaction()`, `useSendNotification()`, `useSetOutcome()`, `useRescheduleNotification()`
 
 ### API Route Contracts
 
@@ -205,14 +208,18 @@ Agents 1-4 run simultaneously. Zero file overlap.
 | ------ | ---------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | GET    | `/api/patients?q=`                       | —                                                                       | `{ patients: Patient[] }`                                          |
 | POST   | `/api/patients`                          | `{ name, whatsapp_number, birth_date?, location?, notes? }`             | `{ patient: Patient }`                                             |
-| GET    | `/api/drugs`                             | —                                                                       | `{ drugs: Drug[] }`                                                |
-| POST   | `/api/drugs`                             | Drug form fields                                                        | `{ drug: Drug }`                                                   |
-| PATCH  | `/api/drugs/[id]`                        | Partial Drug                                                            | `{ drug: Drug }`                                                   |
+| GET    | `/api/catalog`                           | —                                                                       | `{ items: CatalogItem[] }`                                         |
+| POST   | `/api/catalog`                           | Catalog item form fields                                                | `{ item: CatalogItem }`                                            |
+| PATCH  | `/api/catalog/[id]`                      | Partial CatalogItem                                                     | `{ item: CatalogItem }`                                            |
+| DELETE | `/api/catalog/[id]`                      | —                                                                       | `{ item: CatalogItem }`                                            |
+| GET    | `/api/categories`                        | —                                                                       | `{ categories: Category[] }`                                       |
+| POST   | `/api/categories`                        | `{ name }`                                                              | `{ category: Category }`                                           |
 | POST   | `/api/transactions`                      | `{ patient_id, purchase_date, patient_condition, notes, items: [...] }` | `{ transaction: Transaction }`                                     |
 | GET    | `/api/dashboard/sales?period=1m\|3m\|6m` | —                                                                       | `{ revenue, comparison, transactions, activePatients, chartData }` |
 | GET    | `/api/dashboard/notifications`           | —                                                                       | `{ today, overdue, thisWeek, notifications: NotificationLog[] }`   |
 | PATCH  | `/api/notifications/[id]/send`           | —                                                                       | `{ success }`                                                      |
 | PATCH  | `/api/notifications/[id]/outcome`        | `{ outcome }`                                                           | `{ success }`                                                      |
+| POST   | `/api/notifications/[id]/reschedule`     | `{ scheduled_date }`                                                    | `{ notification: NotificationLog }`                                |
 | GET    | `/api/profile`                           | —                                                                       | `{ name, email, clinic_name, location }`                           |
 | PATCH  | `/api/profile`                           | `{ clinic_name, location }`                                             | `{ success }`                                                      |
 
@@ -232,19 +239,19 @@ Agents 1-4 run simultaneously. Zero file overlap.
    - `signin/page.tsx` — Email + password form
    - `signup/page.tsx` — Name, clinic name, email, password, confirm password
    - `forgot-password/page.tsx` — Email input
-   - `reset-password/page.tsx` — Token + new password
+   - `reset-password/page.tsx` — Token + new password form
 2. Create `(dashboard)/layout.tsx`
-   - Persistent bottom nav (5 tabs: Penjualan, Transaksi, Notifikasi, Obat, Profil)
+   - Persistent bottom nav (5 tabs: Penjualan, Transaksi, Notifikasi, Katalog, Profil)
    - Active tab highlight with Midnight Bloom accent
    - Use Next.js `usePathname()`
 3. Create dashboard pages:
    - `sales/page.tsx` — Metric cards (2x2), bar chart, top products, time filter tabs
-   - `transactions/new/page.tsx` — Transaction form with patient/drug comboboxes, auto-calc
-   - `notifications/page.tsx` — Summary pills, notification lists, Kirim WA button, outcome buttons
-   - `drugs/page.tsx` — Drug catalog list, filter chips, FAB, drug form modal
+   - `transactions/new/page.tsx` — Transaction form with patient/catalog item comboboxes, auto-calc, qty lock for services
+   - `notifications/page.tsx` — Summary pills, notification lists, Kirim WA button, outcome buttons with follow-up bottom sheet
+   - `catalog/page.tsx` — Catalog list, filter chips (All/Produk/Layanan + categories), FAB, unified form modal
    - `profile/page.tsx` — Personal info, clinic info, logout
 4. Create dashboard components:
-   - `BottomNav`, `MetricCard`, `SalesChart`, `TransactionForm`, `DrugCombobox`, `PatientCombobox`, `NotificationCard`, `DrugCard`, `QuickAddPatientModal`
+   - `BottomNav`, `MetricCard`, `SalesChart`, `TransactionForm`, `CatalogItemCombobox`, `PatientCombobox`, `NotificationCard`, `CatalogItemCard`, `QuickAddPatientModal`, `RescheduleBottomSheet`
 
 ### Boundary Rules
 

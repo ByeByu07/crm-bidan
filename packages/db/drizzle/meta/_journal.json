@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777970241170,
-      "tag": "0000_large_sabretooth",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777986131678,
-      "tag": "0001_small_risque",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777996549679,
-      "tag": "0002_spicy_captain_universe",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1777998339135,
-      "tag": "0003_volatile_felicia_hardy",
+      "when": 1778408607240,
+      "tag": "0000_bored_the_santerians",
       "breakpoints": true
     }
   ]

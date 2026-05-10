@@ -14,19 +14,32 @@ CREATE TABLE "account" (
 	"updatedAt" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "drug" (
+CREATE TABLE "catalog_item" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"name" text NOT NULL,
+	"type" text NOT NULL,
 	"category" text,
-	"dispense_unit" text NOT NULL,
-	"package_unit" text NOT NULL,
-	"units_per_package" integer NOT NULL,
-	"duration_per_dispense_unit" integer,
-	"sell_price_per_dispense" numeric(12, 2) NOT NULL,
-	"buy_price_per_package" numeric(12, 2),
+	"unit" text NOT NULL,
+	"sell_price" numeric(12, 2) NOT NULL,
+	"cost_price" numeric(12, 2),
+	"duration_days" integer NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"notes" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "category" (
+	"id" text PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"name" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "condition" (
+	"id" text PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"name" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -95,7 +108,7 @@ CREATE TABLE "patient_condition" (
 CREATE TABLE "sale_item" (
 	"id" text PRIMARY KEY NOT NULL,
 	"transaction_id" text NOT NULL,
-	"drug_id" text NOT NULL,
+	"catalog_item_id" text NOT NULL,
 	"quantity_dispense" integer NOT NULL,
 	"price_per_dispense" numeric(12, 2) NOT NULL,
 	"subtotal" numeric(12, 2) NOT NULL,
@@ -115,6 +128,8 @@ CREATE TABLE "session" (
 	"userAgent" text,
 	"userId" text NOT NULL,
 	"impersonatedBy" text,
+	"activeOrganizationId" text,
+	"activeTeamId" text,
 	CONSTRAINT "session_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
@@ -154,7 +169,9 @@ CREATE TABLE "verification" (
 );
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "drug" ADD CONSTRAINT "drug_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "catalog_item" ADD CONSTRAINT "catalog_item_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "category" ADD CONSTRAINT "category_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "condition" ADD CONSTRAINT "condition_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organizationId_organization_id_fk" FOREIGN KEY ("organizationId") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviterId_user_id_fk" FOREIGN KEY ("inviterId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "member" ADD CONSTRAINT "member_organizationId_organization_id_fk" FOREIGN KEY ("organizationId") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -165,16 +182,18 @@ ALTER TABLE "notification_log" ADD CONSTRAINT "notification_log_organization_id_
 ALTER TABLE "patient" ADD CONSTRAINT "patient_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_condition" ADD CONSTRAINT "patient_condition_patient_id_patient_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patient"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sale_item" ADD CONSTRAINT "sale_item_transaction_id_transaction_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."transaction"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "sale_item" ADD CONSTRAINT "sale_item_drug_id_drug_id_fk" FOREIGN KEY ("drug_id") REFERENCES "public"."drug"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sale_item" ADD CONSTRAINT "sale_item_catalog_item_id_catalog_item_id_fk" FOREIGN KEY ("catalog_item_id") REFERENCES "public"."catalog_item"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_patient_id_patient_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patient"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_user_id_idx" ON "account" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "account_provider_idx" ON "account" USING btree ("providerId","accountId");--> statement-breakpoint
-CREATE INDEX "drug_organization_idx" ON "drug" USING btree ("organization_id");--> statement-breakpoint
-CREATE INDEX "drug_name_idx" ON "drug" USING btree ("name");--> statement-breakpoint
-CREATE INDEX "drug_active_idx" ON "drug" USING btree ("is_active");--> statement-breakpoint
-CREATE INDEX "drug_created_idx" ON "drug" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "catalog_item_organization_idx" ON "catalog_item" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "catalog_item_name_idx" ON "catalog_item" USING btree ("name");--> statement-breakpoint
+CREATE INDEX "catalog_item_active_idx" ON "catalog_item" USING btree ("is_active");--> statement-breakpoint
+CREATE INDEX "catalog_item_created_idx" ON "catalog_item" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "category_organization_idx" ON "category" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "condition_organization_idx" ON "condition" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "invitation_organization_idx" ON "invitation" USING btree ("organizationId");--> statement-breakpoint
 CREATE INDEX "invitation_email_idx" ON "invitation" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "invitation_status_idx" ON "invitation" USING btree ("status");--> statement-breakpoint
@@ -193,7 +212,7 @@ CREATE INDEX "patient_name_idx" ON "patient" USING btree ("name");--> statement-
 CREATE INDEX "patient_created_idx" ON "patient" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "patient_condition_patient_idx" ON "patient_condition" USING btree ("patient_id");--> statement-breakpoint
 CREATE INDEX "sale_item_transaction_idx" ON "sale_item" USING btree ("transaction_id");--> statement-breakpoint
-CREATE INDEX "sale_item_drug_idx" ON "sale_item" USING btree ("drug_id");--> statement-breakpoint
+CREATE INDEX "sale_item_catalog_item_idx" ON "sale_item" USING btree ("catalog_item_id");--> statement-breakpoint
 CREATE INDEX "sale_item_next_expected_idx" ON "sale_item" USING btree ("next_expected_buy");--> statement-breakpoint
 CREATE INDEX "session_user_id_idx" ON "session" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "session_token_idx" ON "session" USING btree ("token");--> statement-breakpoint

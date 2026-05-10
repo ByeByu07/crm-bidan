@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { TransactionForm } from "@/components/dashboard/TransactionForm";
-import { useDrugs } from "@/hooks/use-drugs";
+import { useCatalogItems } from "@/hooks/use-catalog-items";
 import { usePatients } from "@/hooks/use-patients";
 import { useConditions } from "@/hooks/use-conditions";
 import { useCreateTransaction } from "@/hooks/use-create-transaction";
@@ -16,7 +16,7 @@ export default function NewTransactionPage() {
   const patientId = searchParams.get("patient_id");
   const notificationId = searchParams.get("notification_id");
 
-  const { data: drugsData, isLoading: drugsLoading } = useDrugs();
+  const { data: catalogData, isLoading: catalogLoading } = useCatalogItems();
   const { data: patientsData, isLoading: patientsLoading } = usePatients();
   const { data: conditionsData, isLoading: conditionsLoading } = useConditions();
   const createTransaction = useCreateTransaction();
@@ -51,7 +51,7 @@ export default function NewTransactionPage() {
     });
   }
 
-  const isLoading = drugsLoading || patientsLoading || conditionsLoading;
+  const isLoading = catalogLoading || patientsLoading || conditionsLoading;
 
   return (
     <div className="space-y-4">
@@ -68,7 +68,7 @@ export default function NewTransactionPage() {
       ) : (
         <TransactionForm
           patients={patientsData?.patients ?? []}
-          drugs={drugsData?.drugs ?? []}
+          catalogItems={catalogData?.items ?? []}
           conditions={conditionsData?.conditions ?? []}
           preselectedPatientId={patientId ?? undefined}
           onSubmit={handleSubmit}

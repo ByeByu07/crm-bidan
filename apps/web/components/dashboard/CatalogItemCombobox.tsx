@@ -17,15 +17,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@repo/ui/components/popover";
-import type { Drug } from "@repo/types";
+import type { CatalogItem } from "@repo/types";
 
-interface DrugComboboxProps {
-  drugs: Drug[];
-  selected: Drug | null;
-  onSelect: (drug: Drug | null) => void;
+interface CatalogItemComboboxProps {
+  items: CatalogItem[];
+  selected: CatalogItem | null;
+  onSelect: (item: CatalogItem | null) => void;
 }
 
-export function DrugCombobox({ drugs, selected, onSelect }: DrugComboboxProps) {
+export function CatalogItemCombobox({ items, selected, onSelect }: CatalogItemComboboxProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,34 +37,34 @@ export function DrugCombobox({ drugs, selected, onSelect }: DrugComboboxProps) {
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {selected ? selected.name : "Pilih obat..."}
+          {selected ? selected.name : "Pilih item..."}
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Cari obat..." />
+          <CommandInput placeholder="Cari item..." />
           <CommandList>
-            <CommandEmpty>Obat tidak ditemukan.</CommandEmpty>
+            <CommandEmpty>Item tidak ditemukan.</CommandEmpty>
             <CommandGroup>
-              {drugs.map((drug) => (
+              {items.map((item) => (
                 <CommandItem
-                  key={drug.id}
-                  value={`${drug.name}__${drug.id}`}
+                  key={item.id}
+                  value={`${item.name}__${item.id}`}
                   onSelect={() => {
-                    onSelect(drug);
+                    onSelect(item);
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 size-4",
-                      selected?.id === drug.id ? "opacity-100" : "opacity-0"
+                      selected?.id === item.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {drug.name}
+                  {item.name}
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {drug.dispenseUnit}
+                    {item.unit}
                   </span>
                 </CommandItem>
               ))}

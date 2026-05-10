@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@repo/db";
-import { transaction, saleItem, drug, patient } from "@repo/db/schema";
+import { transaction, saleItem, catalogItem, patient } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and, desc } from "drizzle-orm";
 import type { PatientTransactionHistory } from "@repo/types";
@@ -49,15 +49,15 @@ export async function GET(
     allSaleItems.push(...items);
   }
 
-  // Fetch all referenced drugs
-  const drugIds = [...new Set(allSaleItems.map((i) => i.drugId))];
-  const allDrugs: (typeof drug.$inferSelect)[] = [];
-  for (const dId of drugIds) {
-    const d = await db.select().from(drug).where(eq(drug.id, dId)).limit(1);
-    if (d[0]) allDrugs.push(d[0]);
+  // Fetch all referenced catalog items
+  const catalogItemIds = [...new Set(allSaleItems.map((i) => i.catalogItemId))];
+  const allItems: (typeof catalogItem.$inferSelect)[] = [];
+  for (const ciId of catalogItemIds) {
+    const ci = await db.select().from(catalogItem).where(eq(catalogItem.id, ciId)).limit(1);
+    if (ci[0]) allItems.push(ci[0]);
   }
 
-  const drugMap = new Map(allDrugs.map((d) => [d.id, d]));
+  const itemMap = new Map(allItems.map((ci) => [ci.id, ci]));
 
   const enriched: PatientTransactionHistory[] = txs.map((tx) => {
     const txItems = allSaleItems.filter((i) => i.transactionId === tx.id);
@@ -68,9 +68,9 @@ export async function GET(
       totalPrice: Number(tx.totalPrice),
       notes: tx.notes,
       items: txItems.map((item) => {
-        const d = drugMap.get(item.drugId);
+        const ci = itemMap.get(item.catalogItemId);
         return {
-          drugName: d?.name ?? "",
+          catalogItemName: ci?.name ?? "",
           quantityDispense: item.quantityDispense,
           pricePerDispense: Number(item.pricePerDispense),
           subtotal: Number(item.subtotal),

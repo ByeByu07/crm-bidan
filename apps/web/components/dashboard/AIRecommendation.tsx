@@ -89,7 +89,7 @@ export function AIRecommendation({ patientId }: AIRecommendationProps) {
                             {tx.items.map((item, idx) => (
                               <span key={idx}>
                                 {idx > 0 && ", "}
-                                {item.drugName} x{item.quantityDispense}
+                                {item.catalogItemName} x{item.quantityDispense}
                               </span>
                             ))}
                           </div>

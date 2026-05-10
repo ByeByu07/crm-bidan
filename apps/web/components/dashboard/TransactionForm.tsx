@@ -11,12 +11,12 @@ import {
   SelectValue,
 } from "@repo/ui/components/select";
 import { PatientCombobox } from "./PatientCombobox";
-import { DrugCombobox } from "./DrugCombobox";
+import { CatalogItemCombobox } from "./CatalogItemCombobox";
 import { QuickAddPatientModal } from "./QuickAddPatientModal";
 import { QuickAddConditionModal } from "./QuickAddConditionModal";
 import { CurrencyInput } from "./CurrencyInput";
 import { Stepper } from "@/components/design-system/Stepper";
-import type { Drug, Patient, Condition } from "@repo/types";
+import type { CatalogItem, Patient, Condition } from "@repo/types";
 import { formatCurrency } from "@repo/utils/format";
 import { calculateSubtotal, calculateDurationDays } from "@repo/utils/calc";
 import { CalendarIcon, Trash2 } from "lucide-react";
@@ -30,14 +30,14 @@ import { formatDate } from "@repo/utils/date";
 
 interface TransactionItem {
   id: string;
-  drug: Drug | null;
+  catalogItem: CatalogItem | null;
   quantityDispense: number;
   pricePerDispense: number;
 }
 
 interface TransactionFormProps {
   patients: Patient[];
-  drugs: Drug[];
+  catalogItems: CatalogItem[];
   conditions: Condition[];
   preselectedPatientId?: string;
   onSubmit: (data: {
@@ -46,7 +46,7 @@ interface TransactionFormProps {
     patient_condition: string;
     notes: string;
     items: Array<{
-      drug_id: string;
+      catalog_item_id: string;
       quantity_dispense: number;
       price_per_dispense: number;
     }>;
@@ -65,7 +65,7 @@ function IPlus() {
 
 export function TransactionForm({
   patients,
-  drugs,
+  catalogItems,
   conditions,
   preselectedPatientId,
   onSubmit,
@@ -78,7 +78,7 @@ export function TransactionForm({
   const [condition, setCondition] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransactionItem[]>([
-    { id: crypto.randomUUID(), drug: null, quantityDispense: 1, pricePerDispense: 0 },
+    { id: crypto.randomUUID(), catalogItem: null, quantityDispense: 1, pricePerDispense: 0 },
   ]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [showAddCondition, setShowAddCondition] = useState(false);
@@ -95,7 +95,7 @@ export function TransactionForm({
   function addItem() {
     setItems((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), drug: null, quantityDispense: 1, pricePerDispense: 0 },
+      { id: crypto.randomUUID(), catalogItem: null, quantityDispense: 1, pricePerDispense: 0 },
     ]);
   }
 
@@ -108,8 +108,12 @@ export function TransactionForm({
       prev.map((i) => {
         if (i.id !== id) return i;
         const next = { ...i, ...updates };
-        if (updates.drug) {
-          next.pricePerDispense = Number(updates.drug.sellPricePerDispense);
+        if (updates.catalogItem) {
+          next.pricePerDispense = Number(updates.catalogItem.sellPrice);
+          // Lock quantity to 1 for services
+          if (updates.catalogItem.type === "service") {
+            next.quantityDispense = 1;
+          }
         }
         return next;
       })
@@ -125,7 +129,7 @@ export function TransactionForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedPatient) return;
-    if (items.some((i) => !i.drug)) return;
+    if (items.some((i) => !i.catalogItem)) return;
 
     onSubmit({
       patient_id: selectedPatient.id,
@@ -133,7 +137,7 @@ export function TransactionForm({
       patient_condition: condition,
       notes,
       items: items.map((i) => ({
-        drug_id: i.drug!.id,
+        catalog_item_id: i.catalogItem!.id,
         quantity_dispense: i.quantityDispense,
         price_per_dispense: i.pricePerDispense,
       })),
@@ -232,7 +236,7 @@ export function TransactionForm({
       </div>
 
       <div style={{ marginBottom: "16px" }}>
-        <label className="fl">Item Obat</label>
+        <label className="fl">Item</label>
         {items.map((item, idx) => (
           <div key={item.id} className="card" style={{ padding: "12px", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -248,10 +252,10 @@ export function TransactionForm({
               )}
             </div>
             <div className="fg">
-              <DrugCombobox
-                drugs={drugs}
-                selected={item.drug}
-                onSelect={(drug) => updateItem(item.id, { drug })}
+              <CatalogItemCombobox
+                items={catalogItems}
+                selected={item.catalogItem}
+                onSelect={(ci) => updateItem(item.id, { catalogItem: ci })}
               />
             </div>
             <div className="fg">
@@ -264,18 +268,28 @@ export function TransactionForm({
             </div>
             <div className="fg">
               <label className="fl">Jumlah</label>
-              <Stepper
-                value={item.quantityDispense}
-                onChange={(v) => updateItem(item.id, { quantityDispense: v })}
-                min={1}
-              />
+              {item.catalogItem?.type === "service" ? (
+                <Input
+                  type="number"
+                  value={1}
+                  disabled
+                  className="fi"
+                  style={{ opacity: 0.6 }}
+                />
+              ) : (
+                <Stepper
+                  value={item.quantityDispense}
+                  onChange={(v) => updateItem(item.id, { quantityDispense: v })}
+                  min={1}
+                />
+              )}
             </div>
-            {item.drug && (
+            {item.catalogItem && (
               <p className="c">
-                Estimasi habis:{" "}
+                Estimasi follow-up:{" "}
                 {calculateDurationDays(
                   item.quantityDispense,
-                  item.drug.durationPerDispenseUnit
+                  item.catalogItem.durationDays
                 )}{" "}
                 hari
               </p>
@@ -286,7 +300,7 @@ export function TransactionForm({
           </div>
         ))}
         <button type="button" className="btn-add-item" onClick={addItem}>
-          <IPlus /> Tambah Item Obat
+          <IPlus /> Tambah Item
         </button>
       </div>
 
@@ -322,7 +336,7 @@ export function TransactionForm({
       <button
         type="submit"
         className="bp"
-        disabled={isSubmitting || !selectedPatient || !condition || items.some((i) => !i.drug)}
+        disabled={isSubmitting || !selectedPatient || !condition || items.some((i) => !i.catalogItem)}
       >
         {isSubmitting ? "Menyimpan..." : "Simpan Transaksi"}
       </button>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@repo/db";
-import { transaction, saleItem, drug } from "@repo/db/schema";
+import { transaction, saleItem, catalogItem } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { calculateChangePercent } from "@repo/utils";
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     .select()
     .from(saleItem)
     .innerJoin(transaction, eq(saleItem.transactionId, transaction.id))
-    .innerJoin(drug, eq(saleItem.drugId, drug.id))
+    .innerJoin(catalogItem, eq(saleItem.catalogItemId, catalogItem.id))
     .where(and(eq(transaction.organizationId, orgId), gte(transaction.purchaseDate, previousStart)));
 
   const currentTxs = txs.filter((t) => new Date(t.purchaseDate) >= currentStart);
@@ -150,17 +150,17 @@ export async function GET(request: NextRequest) {
   // Top products
   const productMap = new Map<string, { name: string; revenue: number; units: number }>();
   for (const row of items) {
-    if (!row.transaction || !row.sale_item || !row.drug) continue;
+    if (!row.transaction || !row.sale_item || !row.catalog_item) continue;
     if (new Date(row.transaction.purchaseDate) < currentStart) continue;
-    const key = row.sale_item.drugId;
-    const existing = productMap.get(key) ?? { name: row.drug.name, revenue: 0, units: 0 };
+    const key = row.sale_item.catalogItemId;
+    const existing = productMap.get(key) ?? { name: row.catalog_item.name, revenue: 0, units: 0 };
     existing.revenue += Number(row.sale_item.subtotal);
     existing.units += row.sale_item.quantityDispense;
     productMap.set(key, existing);
   }
 
   const topProducts: TopProduct[] = Array.from(productMap.entries())
-    .map(([drugId, val]) => ({ drugId, drugName: val.name, revenue: val.revenue, unitsSold: val.units }))
+    .map(([catalogItemId, val]) => ({ catalogItemId, catalogItemName: val.name, revenue: val.revenue, unitsSold: val.units }))
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 

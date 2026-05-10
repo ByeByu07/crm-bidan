@@ -240,8 +240,8 @@ export const condition = pgTable(
   }),
 );
 
-export const drugCategory = pgTable(
-  "drug_category",
+export const category = pgTable(
+  "category",
   {
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
@@ -253,31 +253,30 @@ export const drugCategory = pgTable(
       .notNull(),
   },
   (table) => ({
-    orgIdx: index("drug_category_organization_idx").on(table.organizationId),
+    orgIdx: index("category_organization_idx").on(table.organizationId),
   }),
 );
 
-export const drug = pgTable(
-  "drug",
+export const catalogItem = pgTable(
+  "catalog_item",
   {
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    type: text("type").notNull(), // 'product' | 'service'
     category: text("category"),
-    dispenseUnit: text("dispense_unit").notNull(), // e.g. 'tablet', 'bottle', 'sachet'
-    packageUnit: text("package_unit").notNull(),   // e.g. 'box', 'strip'
-    unitsPerPackage: integer("units_per_package").notNull(),
-    durationPerDispenseUnit: integer("duration_per_dispense_unit"), // days per unit
-    sellPricePerDispense: decimal("sell_price_per_dispense", {
+    unit: text("unit").notNull(), // e.g. 'tablet', 'botol', 'sesi'
+    sellPrice: decimal("sell_price", {
       precision: 12,
       scale: 2,
     }).notNull(),
-    buyPricePerPackage: decimal("buy_price_per_package", {
+    costPrice: decimal("cost_price", {
       precision: 12,
       scale: 2,
     }),
+    durationDays: integer("duration_days").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -285,10 +284,10 @@ export const drug = pgTable(
       .notNull(),
   },
   (table) => ({
-    orgIdx: index("drug_organization_idx").on(table.organizationId),
-    nameIdx: index("drug_name_idx").on(table.name),
-    activeIdx: index("drug_active_idx").on(table.isActive),
-    createdIdx: index("drug_created_idx").on(table.createdAt),
+    orgIdx: index("catalog_item_organization_idx").on(table.organizationId),
+    nameIdx: index("catalog_item_name_idx").on(table.name),
+    activeIdx: index("catalog_item_active_idx").on(table.isActive),
+    createdIdx: index("catalog_item_created_idx").on(table.createdAt),
   }),
 );
 
@@ -329,9 +328,9 @@ export const saleItem = pgTable(
     transactionId: text("transaction_id")
       .notNull()
       .references(() => transaction.id, { onDelete: "cascade" }),
-    drugId: text("drug_id")
+    catalogItemId: text("catalog_item_id")
       .notNull()
-      .references(() => drug.id, { onDelete: "cascade" }),
+      .references(() => catalogItem.id, { onDelete: "cascade" }),
     quantityDispense: integer("quantity_dispense").notNull(),
     pricePerDispense: decimal("price_per_dispense", {
       precision: 12,
@@ -341,11 +340,11 @@ export const saleItem = pgTable(
     durationDays: integer("duration_days"),
     nextExpectedBuy: timestamp("next_expected_buy", { withTimezone: true }),
     actualNextBuy: timestamp("actual_next_buy", { withTimezone: true }),
-    consumptionRate: decimal("consumption_rate", { precision: 10, scale: 4 }), // units per day
+    consumptionRate: decimal("consumption_rate", { precision: 10, scale: 4 }),
   },
   (table) => ({
     transactionIdx: index("sale_item_transaction_idx").on(table.transactionId),
-    drugIdx: index("sale_item_drug_idx").on(table.drugId),
+    catalogItemIdx: index("sale_item_catalog_item_idx").on(table.catalogItemId),
     nextExpectedIdx: index("sale_item_next_expected_idx").on(
       table.nextExpectedBuy,
     ),
@@ -368,7 +367,7 @@ export const notificationLog = pgTable(
     scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
     status: text("status").default("pending").notNull(), // 'pending' | 'sent' | 'failed' | 'skipped'
     sentAt: timestamp("sent_at", { withTimezone: true }),
-    outcome: text("outcome"), // 'purchased' | 'not_purchased' | 'no_response' | 'rescheduled'
+    outcome: text("outcome"), // 'bought' | 'ignored' | 'no_response'
     waMessage: text("wa_message"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -417,7 +416,7 @@ export const organizationRelations = relations(
     members: many(member),
     invitations: many(invitation),
     patients: many(patient),
-    drugs: many(drug),
+    catalogItems: many(catalogItem),
     transactions: many(transaction),
     notificationLogs: many(notificationLog),
   }),
@@ -472,16 +471,16 @@ export const conditionRelations = relations(condition, ({ one }) => ({
   }),
 }));
 
-export const drugCategoryRelations = relations(drugCategory, ({ one }) => ({
+export const categoryRelations = relations(category, ({ one }) => ({
   organization: one(organization, {
-    fields: [drugCategory.organizationId],
+    fields: [category.organizationId],
     references: [organization.id],
   }),
 }));
 
-export const drugRelations = relations(drug, ({ one, many }) => ({
+export const catalogItemRelations = relations(catalogItem, ({ one, many }) => ({
   organization: one(organization, {
-    fields: [drug.organizationId],
+    fields: [catalogItem.organizationId],
     references: [organization.id],
   }),
   saleItems: many(saleItem),
@@ -504,9 +503,9 @@ export const saleItemRelations = relations(saleItem, ({ one, many }) => ({
     fields: [saleItem.transactionId],
     references: [transaction.id],
   }),
-  drug: one(drug, {
-    fields: [saleItem.drugId],
-    references: [drug.id],
+  catalogItem: one(catalogItem, {
+    fields: [saleItem.catalogItemId],
+    references: [catalogItem.id],
   }),
   notificationLogs: many(notificationLog),
 }));

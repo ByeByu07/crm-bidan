@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@repo/db";
-import { transaction, saleItem, drug, notificationLog, patient } from "@repo/db/schema";
+import { transaction, saleItem, catalogItem, notificationLog, patient } from "@repo/db/schema";
 import { getActiveOrganizationId } from "@repo/auth/session";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
@@ -9,10 +9,11 @@ import {
   calculateDurationDays,
   calculateNextExpectedBuy,
 } from "@repo/utils";
+import { buildWaMessage } from "@/lib/wa-message";
 
 
 const transactionItemSchema = z.object({
-  drug_id: z.string().min(1),
+  catalog_item_id: z.string().min(1),
   quantity_dispense: z.number().int().positive(),
   price_per_dispense: z.number().positive(),
 });
@@ -53,9 +54,10 @@ export async function POST(request: NextRequest) {
   const purchaseDate = new Date(data.purchase_date);
   let totalPrice = 0;
 
-  // Calculate totals and enrich items
+  // Calculate totals and enrich items (single pass, fetch catalog item names)
   const enrichedItems: Array<{
-    drugId: string;
+    catalogItemId: string;
+    catalogItemName: string;
     quantityDispense: number;
     pricePerDispense: string;
     subtotal: string;
@@ -64,15 +66,15 @@ export async function POST(request: NextRequest) {
   }> = [];
 
   for (const item of data.items) {
-    const [d] = await db
+    const [ci] = await db
       .select()
-      .from(drug)
-      .where(and(eq(drug.id, item.drug_id), eq(drug.organizationId, orgId)))
+      .from(catalogItem)
+      .where(and(eq(catalogItem.id, item.catalog_item_id), eq(catalogItem.organizationId, orgId)))
       .limit(1);
 
-    if (!d) {
+    if (!ci) {
       return NextResponse.json(
-        { error: `Drug not found: ${item.drug_id}` },
+        { error: `Item not found: ${item.catalog_item_id}` },
         { status: 404 },
       );
     }
@@ -80,14 +82,15 @@ export async function POST(request: NextRequest) {
     const subtotal = calculateSubtotal(item.quantity_dispense, item.price_per_dispense);
     const durationDays = calculateDurationDays(
       item.quantity_dispense,
-      d.durationPerDispenseUnit ?? 1,
+      ci.durationDays,
     );
     const nextExpectedBuy = calculateNextExpectedBuy(purchaseDate, durationDays);
 
     totalPrice += subtotal;
 
     enrichedItems.push({
-      drugId: item.drug_id,
+      catalogItemId: item.catalog_item_id,
+      catalogItemName: ci.name,
       quantityDispense: item.quantity_dispense,
       pricePerDispense: String(item.price_per_dispense),
       subtotal: String(subtotal),
@@ -113,13 +116,19 @@ export async function POST(request: NextRequest) {
     await db.insert(saleItem).values({
       id: saleId,
       transactionId: txId,
-      drugId: item.drugId,
+      catalogItemId: item.catalogItemId,
       quantityDispense: item.quantityDispense,
       pricePerDispense: item.pricePerDispense,
       subtotal: item.subtotal,
       durationDays: item.durationDays,
       nextExpectedBuy: item.nextExpectedBuy,
     });
+
+    const waMessage = buildWaMessage(
+      pat.name,
+      item.catalogItemName,
+      item.nextExpectedBuy,
+    );
 
     await db.insert(notificationLog).values({
       id: crypto.randomUUID(),
@@ -128,7 +137,7 @@ export async function POST(request: NextRequest) {
       organizationId: orgId,
       scheduledDate: item.nextExpectedBuy,
       status: "pending",
-      waMessage: null,
+      waMessage,
     });
   }
 

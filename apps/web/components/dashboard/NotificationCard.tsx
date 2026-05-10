@@ -9,6 +9,7 @@ interface NotificationCardProps {
   notification: NotificationLogItem;
   onSend?: (id: string) => void;
   onSetOutcome: (id: string, outcome: "bought" | "ignored" | "no_response") => void;
+  onReschedule?: (id: string) => void;
   sending?: boolean;
   settingOutcome?: boolean;
 }
@@ -52,6 +53,7 @@ export function NotificationCard({
   notification,
   onSend,
   onSetOutcome,
+  onReschedule,
   sending,
   settingOutcome,
 }: NotificationCardProps) {
@@ -109,13 +111,13 @@ export function NotificationCard({
       {isSent && !notification.outcome && (
         <div className="ob">
           <button className="buy" onClick={handleBuy}>
-            <ICheck /> Pasien Beli Obat
+            <ICheck /> Pasien Beli
           </button>
-          <button className="ignore" onClick={() => onSetOutcome(notification.id, "ignored")} disabled={settingOutcome}>
-            <IX /> Tidak Jadi Beli
+          <button className="ignore" onClick={() => onReschedule?.(notification.id)} disabled={settingOutcome}>
+            <IX /> Tidak Jadi
           </button>
-          <button className="nores" onClick={() => onSetOutcome(notification.id, "no_response")} disabled={settingOutcome}>
-            <IHelp /> Belum Dihubungi
+          <button className="nores" onClick={() => onReschedule?.(notification.id)} disabled={settingOutcome}>
+            <IHelp /> Tidak Dihubungi
           </button>
         </div>
       )}
@@ -134,9 +136,9 @@ export function NotificationCard({
           }}
         >
           {notification.outcome === "bought"
-            ? "✓ Pasien membeli obat"
+            ? "✓ Pasien membeli"
             : notification.outcome === "ignored"
-            ? "✗ Pasien tidak jadi beli"
+            ? "✗ Pasien tidak jadi"
             : "? Belum ada respons"}
         </p>
       )}
