@@ -387,6 +387,27 @@ export const notificationLog = pgTable(
   }),
 );
 
+export const userPushToken = pgTable(
+  "user_push_token",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    expoPushToken: text("expo_push_token").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdx: index("push_token_user_idx").on(table.userId),
+    tokenIdx: index("push_token_token_idx").on(table.expoPushToken),
+  }),
+);
+
 // ==================== RELATIONS ====================
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -527,3 +548,10 @@ export const notificationLogRelations = relations(
     }),
   }),
 );
+
+export const userPushTokenRelations = relations(userPushToken, ({ one }) => ({
+  user: one(user, {
+    fields: [userPushToken.userId],
+    references: [user.id],
+  }),
+}));

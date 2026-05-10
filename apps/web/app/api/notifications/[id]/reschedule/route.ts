@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@repo/db";
 import { notificationLog, saleItem, catalogItem, patient } from "@repo/db/schema";
-import { getActiveOrganizationId } from "@repo/auth/session";
+import { getActiveOrganizationId, getSession } from "@repo/auth/session";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { buildWaMessage } from "@/lib/wa-message";
+import { qstash } from "@/lib/qstash";
 
 const rescheduleSchema = z.object({
   scheduled_date: z.string().min(1),
@@ -113,6 +114,25 @@ export async function POST(
       waMessage,
     })
     .returning();
+
+  // Enqueue push notification
+  try {
+    const session = await getSession();
+    if (session) {
+      await qstash.publishJSON({
+        url: `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/jobs/send-push`,
+        body: {
+          userId: session.user.id,
+          title: "Jadwal Diperbarui",
+          body: `Follow-up untuk ${pat?.name ?? "pasien"} dijadwalkan pada ${scheduledDate.toLocaleDateString("id-ID")}.`,
+          data: { screen: "notifications", type: "rescheduled" },
+        },
+      });
+    }
+  } catch (err) {
+    console.error("Failed to enqueue reschedule push:", err);
+    // Don't fail the request if push enqueue fails
+  }
 
   return NextResponse.json({ notification: newNotification }, { status: 201 });
 }

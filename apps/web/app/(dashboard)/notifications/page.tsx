@@ -24,6 +24,7 @@ export default function NotificationsPage() {
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [filter, setFilter] = useState("Semua");
   const [rescheduleNotificationData, setRescheduleNotificationData] = useState<NotificationLogItem | null>(null);
+  const [rescheduleDefaultOutcome, setRescheduleDefaultOutcome] = useState<"ignored" | "no_response">("ignored");
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -75,8 +76,9 @@ export default function NotificationsPage() {
     );
   }
 
-  function handleReschedule(notification: NotificationLogItem) {
+  function handleReschedule(notification: NotificationLogItem, defaultOutcome: "ignored" | "no_response") {
     setRescheduleNotificationData(notification);
+    setRescheduleDefaultOutcome(defaultOutcome);
   }
 
   function handleRescheduleDate(date: Date) {
@@ -100,9 +102,9 @@ export default function NotificationsPage() {
 
   function handleStopFollowUp() {
     if (!rescheduleNotificationData) return;
-    // Set outcome to ignored (or no_response) without creating new notification
+    // Set outcome based on which button was clicked
     setOutcome.mutate(
-      { id: rescheduleNotificationData.id, outcome: "ignored" },
+      { id: rescheduleNotificationData.id, outcome: rescheduleDefaultOutcome },
       {
         onSuccess: () => {
           toast.success("Follow-up dihentikan");
@@ -162,7 +164,7 @@ export default function NotificationsPage() {
               notification={n}
               onSend={n.status === "pending" ? handleSend : undefined}
               onSetOutcome={handleSetOutcome}
-              onReschedule={() => handleReschedule(n)}
+              onReschedule={(_id, defaultOutcome) => handleReschedule(n, defaultOutcome)}
               sending={sendingId === n.id}
               settingOutcome={outcomeId === n.id}
             />

@@ -6,6 +6,7 @@ import "@repo/ui/globals.css";
 import "streamdown/styles.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { PushTokenProvider } from "@/providers/push-token-provider";
 import { Toaster } from "@repo/ui/components/sonner";
 
 const fontSans = Inter({
@@ -37,8 +38,10 @@ export default function RootLayout({
       <body className={`${fontSans.variable} ${fontSerif.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
-            {children}
-            <Toaster position="top-center" />
+            <PushTokenProvider>
+              {children}
+              <Toaster position="top-center" />
+            </PushTokenProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

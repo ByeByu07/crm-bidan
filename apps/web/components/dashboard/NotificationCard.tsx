@@ -9,7 +9,7 @@ interface NotificationCardProps {
   notification: NotificationLogItem;
   onSend?: (id: string) => void;
   onSetOutcome: (id: string, outcome: "bought" | "ignored" | "no_response") => void;
-  onReschedule?: (id: string) => void;
+  onReschedule?: (id: string, defaultOutcome: "ignored" | "no_response") => void;
   sending?: boolean;
   settingOutcome?: boolean;
 }
@@ -113,10 +113,10 @@ export function NotificationCard({
           <button className="buy" onClick={handleBuy}>
             <ICheck /> Pasien Beli
           </button>
-          <button className="ignore" onClick={() => onReschedule?.(notification.id)} disabled={settingOutcome}>
+          <button className="ignore" onClick={() => onReschedule?.(notification.id, "ignored")} disabled={settingOutcome}>
             <IX /> Tidak Jadi
           </button>
-          <button className="nores" onClick={() => onReschedule?.(notification.id)} disabled={settingOutcome}>
+          <button className="nores" onClick={() => onReschedule?.(notification.id, "no_response")} disabled={settingOutcome}>
             <IHelp /> Tidak Dihubungi
           </button>
         </div>
