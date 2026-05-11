@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { Pills } from "@/components/design-system/Pills";
 import { formatCurrencyShort } from "@repo/utils/format";
 import type { SalesPeriod } from "@repo/types";
+import { useProfile } from "@/hooks/use-profile";
 
 const periodOptions = ["Bulan Ini", "3 Bulan", "6 Bulan"];
 const periodMap: Record<string, SalesPeriod> = {
@@ -24,6 +25,7 @@ export default function SalesPage() {
 
   const { data: metricsData, isLoading: metricsLoading } = useSales("1m");
   const { data: chartData, isLoading: chartLoading } = useSales(period ?? "1m");
+  const { data: profile } = useProfile();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -38,7 +40,7 @@ export default function SalesPage() {
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
           <span className="c">{greeting}</span>
-          <span className="d" style={{ fontSize: "22px" }}>Bidan Wati</span>
+          <span className="d" style={{ fontSize: "22px" }}>{profile?.name || ""}</span>
         </div>
         <AvatarButton />
       </header>
