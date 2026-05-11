@@ -198,33 +198,43 @@ export default function CatalogPage() {
 
       <SearchBar placeholder="Cari item..." value={search} onChange={setSearch} />
 
-      <div className="pillrow">
-        {["Semua", "Produk", "Layanan"].map((t) => (
-          <button
-            key={t}
-            className={`pill ${activeType === t ? "on" : ""}`}
-            onClick={() => setActiveType(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {categoriesLoading ? (
-        <Skeleton className="h-9 w-full" />
-      ) : (
-        <div className="pillrow">
-          {categoryNames.map((cat) => (
+      <div className="space-y-2">
+        {/* Type — segmented control */}
+        <div className="flex rounded-xl p-0.5" style={{ background: "var(--bidan-border)" }}>
+          {["Semua", "Produk", "Layanan"].map((t) => (
             <button
-              key={cat}
-              className={`pill ${activeCategory === cat ? "on" : ""}`}
-              onClick={() => setActiveCategory(cat)}
+              key={t}
+              className="flex-1 rounded-lg py-1.5 text-[13px] font-medium transition-all"
+              style={{
+                background: activeType === t ? "var(--bidan-surface)" : "transparent",
+                color: activeType === t ? "var(--bidan-fg)" : "var(--bidan-muted)",
+                boxShadow: activeType === t ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+              }}
+              onClick={() => setActiveType(t)}
             >
-              {cat}
+              {t}
             </button>
           ))}
         </div>
-      )}
+
+        {/* Category — compact pills */}
+        {categoriesLoading ? (
+          <Skeleton className="h-8 w-full" />
+        ) : (
+          <div className="pillrow" style={{ marginBottom: 0 }}>
+            {categoryNames.map((cat) => (
+              <button
+                key={cat}
+                className={`pill ${activeCategory === cat ? "on" : ""}`}
+                style={{ padding: "4px 12px", fontSize: 12 }}
+                onClick={() => setActiveCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="space-y-3">
